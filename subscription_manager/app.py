@@ -27,25 +27,32 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from setuptools import setup, find_packages
+from pathlib import Path
+
+import connexion
+from pkg_resources import resource_filename
+
+from subscription_manager import VERSION, DESCRIPTION, BASE_PATH
 
 __author__ = "EUROCONTROL (SWIM)"
 
-setup(
-    name='subscription-manager',
-    version='0.0.1',
-    description='Subscription MAnager',
-    author='EUROCONTROL (SWIM)',
-    author_email='',
-    packages=find_packages(exclude=['tests']),
-    url='https://bitbucket.org/antavelos-eurocontrol/subscription-manager',
-    install_requires=[
-    ],
-    tests_require=[
-        'pytest',
-        'pytest-cov'
-    ],
-    platforms=['Any'],
-    license='see LICENSE',
-    zip_safe=False
-)
+
+def create_app(config_filename=None):
+    connexion_app = connexion.App(__name__)
+
+    connexion_app.add_api(
+        Path('swagger.yml'),
+        arguments=(dict(
+            version=VERSION,
+            description=DESCRIPTION,
+            base_path=BASE_PATH)),
+        strict_validation=True
+    )
+
+    return connexion_app.app
+
+
+if __name__ == '__main__':
+    config_path = resource_filename(__name__, 'config.yml')
+    app = create_app(config_path)
+    app.run(port=8080, debug=False)

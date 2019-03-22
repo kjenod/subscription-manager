@@ -1,0 +1,279 @@
+swagger: '2.0'
+info:
+  version: "{{ version }}"
+  title: Subscription Manager
+  description: {{ description }}
+
+basePath: {{ base_path }}
+
+paths:
+  /topics:
+    get:
+      operationId: subscription_manager.endpoints.topics.get_topics
+      description: Get the available topics for subscription.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Topic"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+      tags:
+        - Topics
+    post:
+      operationId: subscription_manager.endpoints.topics.post_topic
+      description: Create a new topic.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: topic
+          description: A subscription topic
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Topic'
+
+      responses:
+        201:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Topic"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+      tags:
+        - Topics
+
+  /topics/{topic_id}:
+    get:
+      operationId: subscription_manager.endpoints.topics.get_topic
+      description: Get the available topics for subscription.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: topic_id
+          in: path
+          description: The id of a topic
+          required: true
+          type: string
+
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Topic"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+      tags:
+        - Topics
+    put:
+      operationId: subscription_manager.endpoints.topics.put_topic
+      description: Create a new topic.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: topic
+          description: A subscription topic
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Topic'
+        - name: topic_id
+          in: path
+          description: The id of a topic
+          required: true
+          type: string
+
+      responses:
+        201:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Topic"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+      tags:
+        - Topics
+
+
+  /subscriptions:
+    get:
+      operationId: subscription_manager.endpoints.subscriptions.get_subscriptions
+      description: Get the available subscriptions for subscription.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Subscription"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+      tags:
+        - Subscriptions
+    post:
+      operationId: subscription_manager.endpoints.subscriptions.post_subscription
+      description: Create a new subscription.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: subscription
+          description: A subscription subscription
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Subscription'
+
+      responses:
+        201:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Subscription"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+      tags:
+        - Subscriptions
+
+  /subscriptions/{subscription_id}:
+    get:
+      operationId: subscription_manager.endpoints.subscriptions.get_subscription
+      description: Get the available subscriptions for subscription.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: subscription_id
+          in: path
+          description: The id of a subscription
+          required: true
+          type: string
+
+      responses:
+        200:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Subscription"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+      tags:
+        - Subscriptions
+    put:
+      operationId: subscription_manager.endpoints.subscriptions.put_subscription
+      description: Create a new subscription.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: subscription
+          description: A subscription subscription
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Subscription'
+        - name: subscription_id
+          in: path
+          description: The id of a subscription
+          required: true
+          type: string
+
+      responses:
+        201:
+          description: Successful response
+          schema:
+            $ref: "#/definitions/Subscription"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+
+      tags:
+        - Subscriptions
+
+
+
+definitions:
+
+  Topic:
+    description: Represents the available information of a topic
+    type: object
+    properties:
+      name:
+        type: string
+      id:
+        type: number
+
+  Subscription:
+    description: Represents the available information of a subscription
+    type: object
+    properties:
+      topic:
+        type: object
+        $ref: '#/definitions/Topic'
+      id:
+        type: number
+      status:
+        type: string
+      queue:
+        type: string
+      qos:
+        type: string
+      durable:
+        type: boolean
+
+
+  Error:
+    description: Error structure (RFC 7807 compliant - https://tools.ietf.org/html/rfc7807)
+    type: object
+    required:
+      - detail
+      - status
+    properties:
+      detail:
+        type: string
+        description: A human-readable explanation specific to this occurrence of the problem
+      status:
+        type: integer
+        description: The HTTP response code
+      type:
+        type: string
+        description: A URI reference that identifies the problem type (optional).
+      instance:
+        type: string
+        description: A URI reference that identifies the specific occurence of the problem (optional).
