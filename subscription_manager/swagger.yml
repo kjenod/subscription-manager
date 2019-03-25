@@ -262,18 +262,16 @@ definitions:
     description: Error structure (RFC 7807 compliant - https://tools.ietf.org/html/rfc7807)
     type: object
     required:
+      - title
       - detail
       - status
     properties:
+      title:
+        type: string
+        description: A short, human-readable summary of the problem
       detail:
         type: string
         description: A human-readable explanation specific to this occurrence of the problem
       status:
         type: integer
         description: The HTTP response code
-      type:
-        type: string
-        description: A URI reference that identifies the problem type (optional).
-      instance:
-        type: string
-        description: A URI reference that identifies the specific occurence of the problem (optional).

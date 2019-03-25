@@ -27,37 +27,69 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from pathlib import Path
+import typing as t
+from http import HTTPStatus
 
-import connexion
-from pkg_resources import resource_filename
-
-from subscription_manager import VERSION, DESCRIPTION, BASE_PATH
-from subscription_manager.base.flask import configure
+from flask import request
+from werkzeug.exceptions import HTTPException
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def create_app(config_filename=None):
-    connexion_app = connexion.App(__name__)
+class APIError(Exception):
+    title = None
+    detail = None
+    status = HTTPStatus.BAD_REQUEST
 
-    connexion_app.add_api(
-        Path('swagger.yml'),
-        arguments=(dict(
-            version=VERSION,
-            description=DESCRIPTION,
-            base_path=BASE_PATH)),
-        strict_validation=True
-    )
+    def __init__(self, detail, status=None):
+        self.detail = detail
 
-    app = connexion_app.app
-
-    configure(app, {})
-
-    return app
+        if status is not None:
+            self.status = status
 
 
-if __name__ == '__main__':
-    config_path = resource_filename(__name__, 'config.yml')
-    app = create_app(config_path)
-    app.run(port=8080, debug=False)
+class BadRequestError(APIError):
+    title = 'Bad Request'
+    status = HTTPStatus.BAD_REQUEST
+
+
+class NotFoundError(APIError):
+    title = 'Not Found'
+    status = HTTPStatus.NOT_FOUND
+
+
+class UnauthorizedError(APIError):
+    title = 'Unauthorized'
+    status = HTTPStatus.UNAUTHORIZED
+
+
+class ForbiddenError(APIError):
+    title = 'Forbidden'
+    status = HTTPStatus.FORBIDDEN
+
+
+def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str, str]:
+    """
+    :param error: The error raised from the request
+    :return: The response body of the error
+    """
+    if isinstance(error, HTTPException):
+        status = error.code
+        title = error.name
+        detail = error.description
+    elif isinstance(error, APIError):
+        status = error.status.value
+        title = error.title
+        detail = error.detail
+    else:
+        status = HTTPStatus.INTERNAL_SERVER_ERROR.value
+        title = 'Internal Server Error'
+        detail = 'The server has encountered an error during the request'
+
+    body = {
+        "status": status,
+        "title": title,
+        "detail": detail
+    }
+
+    return body

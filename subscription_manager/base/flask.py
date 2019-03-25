@@ -27,37 +27,29 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from pathlib import Path
+from flask import jsonify
+from werkzeug.exceptions import default_exceptions
 
-import connexion
-from pkg_resources import resource_filename
-
-from subscription_manager import VERSION, DESCRIPTION, BASE_PATH
-from subscription_manager.base.flask import configure
+from subscription_manager.base.errors import process_error
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def create_app(config_filename=None):
-    connexion_app = connexion.App(__name__)
+def configure(app, config):
+    app.config.from_mapping(config)
 
-    connexion_app.add_api(
-        Path('swagger.yml'),
-        arguments=(dict(
-            version=VERSION,
-            description=DESCRIPTION,
-            base_path=BASE_PATH)),
-        strict_validation=True
-    )
+    _configure_error_handling(app)
 
-    app = connexion_app.app
-
-    configure(app, {})
-
-    return app
+def _configure_error_handling(app):
+    for status_code in default_exceptions.keys():
+        app.register_error_handler(status_code, _handle_generic_error)
+    app.register_error_handler(Exception, _handle_generic_error)
 
 
-if __name__ == '__main__':
-    config_path = resource_filename(__name__, 'config.yml')
-    app = create_app(config_path)
-    app.run(port=8080, debug=False)
+def _handle_generic_error(error):
+    body = process_error(error)
+    response = jsonify(**body)
+    response.mimetype = 'application/problem+json'
+    response.status_code = body['status']
+
+    return response
