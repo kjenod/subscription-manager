@@ -11,3 +11,4 @@ dependencies:
   - connexion[swagger-ui]
   - marshmallow
   - marshmallow-sqlalchemy
+  - psycopg2-binary
