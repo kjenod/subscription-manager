@@ -68,6 +68,11 @@ class ForbiddenError(APIError):
     status = HTTPStatus.FORBIDDEN
 
 
+class ConflictError(APIError):
+    title = 'Conflict'
+    status = HTTPStatus.CONFLICT
+
+
 def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str, str]:
     """
     :param error: The error raised from the request
@@ -82,6 +87,7 @@ def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str,
         title = error.title
         detail = error.detail
     else:
+        raise error
         status = HTTPStatus.INTERNAL_SERVER_ERROR.value
         title = 'Internal Server Error'
         detail = 'The server has encountered an error during the request'

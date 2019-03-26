@@ -7,7 +7,7 @@ info:
 basePath: {{ base_path }}
 
 paths:
-  /topics:
+  /topics/:
     get:
       operationId: subscription_manager.endpoints.topics.get_topics
       description: Get the available topics for subscription.
@@ -36,12 +36,12 @@ paths:
       consumes:
         - application/json
       parameters:
-        - name: topic
+        - name: topic_data
           description: A subscription topic
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Topic'
+            $ref: '#/definitions/TopicPost'
 
       responses:
         201:
@@ -91,12 +91,12 @@ paths:
       consumes:
         - application/json
       parameters:
-        - name: topic
+        - name: topic_data
           description: A subscription topic
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Topic'
+            $ref: '#/definitions/TopicPost'
         - name: topic_id
           in: path
           description: The id of a topic
@@ -117,7 +117,7 @@ paths:
         - Topics
 
 
-  /subscriptions:
+  /subscriptions/:
     get:
       operationId: subscription_manager.endpoints.subscriptions.get_subscriptions
       description: Get the available subscriptions for subscription.
@@ -146,12 +146,12 @@ paths:
       consumes:
         - application/json
       parameters:
-        - name: subscription
+        - name: subscription_data
           description: A subscription subscription
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Subscription'
+            $ref: '#/definitions/SubscriptionPost'
 
       responses:
         201:
@@ -201,12 +201,12 @@ paths:
       consumes:
         - application/json
       parameters:
-        - name: subscription
+        - name: subscription_data
           description: A subscription subscription
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Subscription'
+            $ref: '#/definitions/SubscriptionPost'
         - name: subscription_id
           in: path
           description: The id of a subscription
@@ -230,17 +230,38 @@ paths:
 
 definitions:
 
-  Topic:
+  TopicPost:
     description: Represents the available information of a topic
     type: object
     properties:
       name:
         type: string
-      id:
+
+  Topic:
+    allOf:
+      - $ref: '#/definitions/TopicPost'
+      - type: object
+        properties:
+          id:
+            type: number
+
+
+  SubscriptionPost:
+    description: Represents the available information of a subscription
+    type: object
+    required:
+      - topic_id
+    properties:
+      topic_id:
         type: number
+      active:
+        type: boolean
+      qos:
+        type: string
+      durable:
+        type: boolean
 
   Subscription:
-    description: Represents the available information of a subscription
     type: object
     properties:
       topic:
@@ -248,15 +269,14 @@ definitions:
         $ref: '#/definitions/Topic'
       id:
         type: number
-      status:
-        type: string
       queue:
         type: string
+      active:
+        type: boolean
       qos:
         type: string
       durable:
         type: boolean
-
 
   Error:
     description: Error structure (RFC 7807 compliant - https://tools.ietf.org/html/rfc7807)

@@ -27,21 +27,62 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from marshmallow import ValidationError
+from sqlalchemy.exc import IntegrityError
+
+from subscription_manager.base.errors import ConflictError, NotFoundError, BadRequestError
+from subscription_manager.db.subscriptions import get_subscriptions as db_get_subscriptions, \
+    get_subscription_by_id as db_get_subscription_by_id, create_subscription, update_subscription
+from subscription_manager.endpoints.schemas import marshal_with, SubscriptionSchema, unmarshal
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
+@marshal_with(SubscriptionSchema, many=True)
 def get_subscriptions():
-    return []
+    return db_get_subscriptions()
 
 
+@marshal_with(SubscriptionSchema)
 def get_subscription(subscription_id):
-    return None
+    result = db_get_subscription_by_id(subscription_id)
+
+    if result is None:
+        raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
+
+    return result
 
 
+@marshal_with(SubscriptionSchema)
 def post_subscription(subscription_data):
-    return None
+    try:
+        subscription = unmarshal(SubscriptionSchema, subscription_data)
+    except ValidationError as e:
+        raise BadRequestError(str(e))
+
+    try:
+        subscription_created = create_subscription(subscription)
+    except IntegrityError as e:
+        raise ConflictError(f"Error while saving subscription in DB: {str(e)}")
+
+    return subscription_created
 
 
-def put_subscription(subscription_data):
-    return None
+@marshal_with(SubscriptionSchema)
+def put_subscription(subscription_id, subscription_data):
+    subscription = db_get_subscription_by_id(subscription_id)
+
+    if subscription is None:
+        raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
+
+    try:
+        subscription = unmarshal(SubscriptionSchema, subscription_data, instance=subscription)
+    except ValidationError as e:
+        raise BadRequestError(str(e))
+
+    try:
+        subscription_updated = update_subscription(subscription)
+    except IntegrityError:
+        raise ConflictError("Error while saving subscription in DB")
+
+    return subscription_updated

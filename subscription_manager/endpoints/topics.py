@@ -27,21 +27,55 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from sqlalchemy.exc import IntegrityError
+
+from subscription_manager.base.errors import NotFoundError, ConflictError
+from subscription_manager.db.topics import get_topics as db_get_topics, get_topic_by_id as db_get_topic_by_id, \
+    create_topic, update_topic
+from subscription_manager.endpoints.schemas import TopicSchema, marshal_with
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
+@marshal_with(TopicSchema, many=True)
 def get_topics():
-    return []
+    return db_get_topics()
 
 
+@marshal_with(TopicSchema)
 def get_topic(topic_id):
-    return None
+    result = db_get_topic_by_id(topic_id)
+
+    if result is None:
+        raise NotFoundError(f"Topic with id {topic_id} does not exist")
+
+    return result
 
 
+@marshal_with(TopicSchema)
 def post_topic(topic_data):
-    return None
+    topic = TopicSchema().load(topic_data).data
+
+    try:
+        topic_created = create_topic(topic)
+    except IntegrityError:
+        raise ConflictError("Error while saving topic in DB")
+
+    return topic_created
 
 
-def put_topic(topic_data):
-    return None
+@marshal_with(TopicSchema)
+def put_topic(topic_id, topic_data):
+    topic = db_get_topic_by_id(topic_id)
+
+    if topic is None:
+        raise NotFoundError(f"Topic with id {topic_id} does not exist")
+
+    topic = TopicSchema().load(topic_data, instance=topic).data
+
+    try:
+        topic_updated = update_topic(topic)
+    except IntegrityError:
+        raise ConflictError("Error while saving topic in DB")
+
+    return topic_updated
