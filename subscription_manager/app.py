@@ -33,7 +33,8 @@ import connexion
 from pkg_resources import resource_filename
 
 from subscription_manager import VERSION, DESCRIPTION, BASE_PATH
-from subscription_manager.base.flask import configure
+from subscription_manager.base.flask import configure_flask
+from subscription_manager.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -52,9 +53,21 @@ def create_app(config_filename=None):
 
     app = connexion_app.app
 
-    configure(app, {})
+    configure_flask(app, {})
+    _configure_db(db, app)
 
     return app
+
+
+def _configure_db(db, app):
+    DB_URL = f'postgresql+psycopg2://alex:alex@localhost:5432/subscriptions'
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # silence the deprecation warning
+
+    with app.app_context():
+        db.init_app(app)
+        db.create_all()
 
 
 if __name__ == '__main__':

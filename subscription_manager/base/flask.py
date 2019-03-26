@@ -35,7 +35,7 @@ from subscription_manager.base.errors import process_error
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def configure(app, config):
+def configure_flask(app, config):
     app.config.from_mapping(config)
 
     _configure_error_handling(app)
