@@ -27,6 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import os
 from pathlib import Path
 
 import connexion
@@ -39,7 +40,7 @@ from subscription_manager.db import db
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def create_app(config_filename=None):
+def create_app(config_file):
     connexion_app = connexion.App(__name__)
 
     connexion_app.add_api(
@@ -53,17 +54,24 @@ def create_app(config_filename=None):
 
     app = connexion_app.app
 
+    _load_config(app, config_file)
+
     configure_flask(app, {})
+
     _configure_db(db, app)
 
     return app
 
 
-def _configure_db(db, app):
-    DB_URL = f'postgresql+psycopg2://alex:alex@localhost:5432/subscriptions'
+def _load_config(app, filename):
+    app.config.from_pyfile(filename)
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # silence the deprecation warning
+    # app_config_file = os.getenv('FLASK_APPLICATION_CONFIG')
+    # if app_config_file:
+    #     app.config.from_pyfile(app_config_file)
+
+
+def _configure_db(db, app):
 
     with app.app_context():
         db.init_app(app)
@@ -71,6 +79,6 @@ def _configure_db(db, app):
 
 
 if __name__ == '__main__':
-    config_path = resource_filename(__name__, 'config.yml')
-    app = create_app(config_path)
+    config_file = resource_filename(__name__, 'config.py')
+    app = create_app(config_file)
     app.run(port=8080, debug=False)

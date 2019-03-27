@@ -27,12 +27,13 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from subscription_manager.base.errors import NotFoundError, ConflictError
+from subscription_manager.base.errors import NotFoundError, ConflictError, BadRequestError
 from subscription_manager.db.topics import get_topics as db_get_topics, get_topic_by_id as db_get_topic_by_id, \
     create_topic, update_topic
-from subscription_manager.endpoints.schemas import TopicSchema, marshal_with
+from subscription_manager.endpoints.schemas import TopicSchema, marshal_with, unmarshal
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -54,7 +55,10 @@ def get_topic(topic_id):
 
 @marshal_with(TopicSchema)
 def post_topic(topic_data):
-    topic = TopicSchema().load(topic_data).data
+    try:
+        topic = unmarshal(TopicSchema, topic_data)
+    except ValidationError as e:
+        raise BadRequestError(str(e))
 
     try:
         topic_created = create_topic(topic)
@@ -71,7 +75,10 @@ def put_topic(topic_id, topic_data):
     if topic is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")
 
-    topic = TopicSchema().load(topic_data, instance=topic).data
+    try:
+        topic = unmarshal(TopicSchema, topic_data, instance=topic)
+    except ValidationError as e:
+        raise BadRequestError(str(e))
 
     try:
         topic_updated = update_topic(topic)

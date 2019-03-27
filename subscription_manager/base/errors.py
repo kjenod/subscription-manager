@@ -30,7 +30,6 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import typing as t
 from http import HTTPStatus
 
-from flask import request
 from werkzeug.exceptions import HTTPException
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -49,28 +48,28 @@ class APIError(Exception):
 
 
 class BadRequestError(APIError):
-    title = 'Bad Request'
-    status = HTTPStatus.BAD_REQUEST
+    title = HTTPStatus.BAD_REQUEST.phrase
+    status = HTTPStatus.BAD_REQUEST.value
 
 
 class NotFoundError(APIError):
-    title = 'Not Found'
-    status = HTTPStatus.NOT_FOUND
+    title = HTTPStatus.NOT_FOUND.phrase
+    status = HTTPStatus.NOT_FOUND.value
 
 
 class UnauthorizedError(APIError):
-    title = 'Unauthorized'
-    status = HTTPStatus.UNAUTHORIZED
+    title = HTTPStatus.UNAUTHORIZED.phrase
+    status = HTTPStatus.UNAUTHORIZED.value
 
 
 class ForbiddenError(APIError):
-    title = 'Forbidden'
-    status = HTTPStatus.FORBIDDEN
+    title = HTTPStatus.FORBIDDEN.phrase
+    status = HTTPStatus.FORBIDDEN.value
 
 
 class ConflictError(APIError):
-    title = 'Conflict'
-    status = HTTPStatus.CONFLICT
+    title = HTTPStatus.CONFLICT.phrase
+    status = HTTPStatus.CONFLICT.value
 
 
 def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str, str]:
@@ -83,14 +82,13 @@ def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str,
         title = error.name
         detail = error.description
     elif isinstance(error, APIError):
-        status = error.status.value
+        status = error.status
         title = error.title
         detail = error.detail
     else:
-        raise error
         status = HTTPStatus.INTERNAL_SERVER_ERROR.value
         title = 'Internal Server Error'
-        detail = 'The server has encountered an error during the request'
+        detail = 'The server has encountered an error during the request' + str(error)
 
     body = {
         "status": status,

@@ -27,24 +27,23 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import uuid
+from uuid import uuid4
 
-from sqlalchemy.exc import IntegrityError
-
-from subscription_manager.db import db
+from subscription_manager.db import Topic, Subscription
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def db_save(object):
-    try:
-        db.session.add(object)
-        db.session.commit()
-        return object
-    except IntegrityError:
-        db.session.rollback()
-        raise
+def _unique_id():
+    return uuid4().hex
 
 
-def generate_queue():
-    return uuid.uuid4().hex
+def make_topic(name='test_topic'):
+    return Topic(name=name)
+
+
+def make_subscription():
+    return Subscription(
+        topic = make_topic(name=_unique_id()),
+        queue = _unique_id()
+    )

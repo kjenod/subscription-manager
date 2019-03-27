@@ -31,7 +31,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from subscription_manager.db import Subscription
-from subscription_manager.db.utils import db_save, generate_gueue
+from subscription_manager.db.utils import db_save, generate_queue
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -51,7 +51,7 @@ def get_subscriptions():
 
 def create_subscription(subscription):
     if subscription.queue is None:
-        subscription.queue = generate_gueue()
+        subscription.queue = generate_queue()
 
     return db_save(subscription)
 
