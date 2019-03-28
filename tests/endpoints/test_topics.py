@@ -119,7 +119,7 @@ def test_post_topic__db_error__returns_409(mock_create_topic, test_client, gener
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
-    assert response_data['detail'] == "Error while saving topic in DB"
+    assert "Error while saving topic in DB" == response_data['detail']
 
 
 def test_post_topic__topic_is_saved_in_db(test_client):
@@ -153,7 +153,7 @@ def test_put_topic__db_error__returns_409(mock_update_topic, test_client, genera
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
-    assert response_data['detail'] == "Error while saving topic in DB"
+    assert "Error while saving topic in DB" == response_data['detail']
 
 
 def test_put_topic__topic_does_not_exist__returns_404(test_client):

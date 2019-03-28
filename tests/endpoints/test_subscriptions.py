@@ -184,7 +184,7 @@ def test_post_subscription__db_error__returns_409(mock_create_subscription, test
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
-    assert response_data['detail'] == "Error while saving subscription in DB"
+    assert "Error while saving subscription in DB" == response_data['detail']
 
 
 def test_post_subscription__subscription_is_saved_in_db(test_client, generate_topic):
