@@ -31,8 +31,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from subscription_manager.base.errors import NotFoundError, ConflictError, BadRequestError
-from subscription_manager.db.topics import get_topics as db_get_topics, get_topic_by_id as db_get_topic_by_id, \
-    create_topic, update_topic
+from subscription_manager.db import topics as db
 from subscription_manager.endpoints.schemas import TopicSchema, marshal_with, unmarshal
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -40,12 +39,12 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @marshal_with(TopicSchema, many=True)
 def get_topics():
-    return db_get_topics()
+    return db.get_topics()
 
 
 @marshal_with(TopicSchema)
 def get_topic(topic_id):
-    result = db_get_topic_by_id(topic_id)
+    result = db.get_topic_by_id(topic_id)
 
     if result is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")
@@ -61,16 +60,16 @@ def post_topic(topic_data):
         raise BadRequestError(str(e))
 
     try:
-        topic_created = create_topic(topic)
+        topic_created = db.create_topic(topic)
     except IntegrityError:
         raise ConflictError("Error while saving topic in DB")
 
-    return topic_created
+    return topic_created, 201
 
 
 @marshal_with(TopicSchema)
 def put_topic(topic_id, topic_data):
-    topic = db_get_topic_by_id(topic_id)
+    topic = db.get_topic_by_id(topic_id)
 
     if topic is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")
@@ -81,7 +80,7 @@ def put_topic(topic_id, topic_data):
         raise BadRequestError(str(e))
 
     try:
-        topic_updated = update_topic(topic)
+        topic_updated = db.update_topic(topic)
     except IntegrityError:
         raise ConflictError("Error while saving topic in DB")
 

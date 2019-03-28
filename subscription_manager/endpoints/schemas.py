@@ -29,14 +29,16 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from functools import wraps
 
-from marshmallow import post_load, post_dump, ValidationError
-from marshmallow.fields import Nested, String
+from marshmallow import post_dump, ValidationError
+from marshmallow.fields import Nested, String, Integer
 from marshmallow_sqlalchemy import ModelSchemaOpts, ModelSchema
 
 from subscription_manager.db import db
 from subscription_manager.db.models import Topic, Subscription, QOS
+from subscription_manager.db.topics import get_topic_by_id
 
 __author__ = "EUROCONTROL (SWIM)"
+
 
 class BaseOpts(ModelSchemaOpts):
     def __init__(self, meta):
@@ -58,6 +60,13 @@ class TopicSchema(BaseSchema):
         dump_only = ("id",)
 
 
+def validate_topic_id(topic_id):
+    topic = get_topic_by_id(topic_id)
+
+    if topic is None:
+        raise ValidationError(f"there is no topic with id {topic_id}")
+
+
 def validate_qos(qos):
     all_qos = QOS.all()
 
@@ -72,7 +81,8 @@ class SubscriptionSchema(BaseSchema):
         load_only = ("topic_id",)
         dump_only = ("id", "queue", "topic")
 
-    qos = String(validate=validate_qos, required=True)
+    qos = String(validate=validate_qos)
+    topic_id = Integer(validate=validate_topic_id)
     topic = Nested(TopicSchema)
 
     @post_dump
@@ -85,11 +95,11 @@ class SubscriptionSchema(BaseSchema):
 
 
 def unmarshal(schema_class, data, instance=None):
-    object, errors = schema_class().load(data, instance=instance)
+    obj, errors = schema_class().load(data, instance=instance)
     if errors:
         raise ValidationError(", ".join(list(errors.values())[0]))
 
-    return object
+    return obj
 
 
 def marshal_with(schema_class, many=False):
@@ -98,8 +108,13 @@ def marshal_with(schema_class, many=False):
         def wrapper(*args, **kwargs):
             result = func(*args, **kwargs)
 
-            marshaled_result = schema_class(many=many).dump(result).data
+            if isinstance(result, tuple):
+                obj, status_code = result
+            else:
+                obj, status_code = result, 200
 
-            return marshaled_result
+            marshaled_obj = schema_class(many=many).dump(obj).data
+
+            return marshaled_obj, status_code
         return wrapper
     return decorator

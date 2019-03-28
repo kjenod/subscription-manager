@@ -31,8 +31,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
 from subscription_manager.base.errors import ConflictError, NotFoundError, BadRequestError
-from subscription_manager.db.subscriptions import get_subscriptions as db_get_subscriptions, \
-    get_subscription_by_id as db_get_subscription_by_id, create_subscription, update_subscription
+from subscription_manager.db import subscriptions as db
 from subscription_manager.endpoints.schemas import marshal_with, SubscriptionSchema, unmarshal
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -40,12 +39,12 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @marshal_with(SubscriptionSchema, many=True)
 def get_subscriptions():
-    return db_get_subscriptions()
+    return db.get_subscriptions()
 
 
 @marshal_with(SubscriptionSchema)
 def get_subscription(subscription_id):
-    result = db_get_subscription_by_id(subscription_id)
+    result = db.get_subscription_by_id(subscription_id)
 
     if result is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
@@ -61,16 +60,16 @@ def post_subscription(subscription_data):
         raise BadRequestError(str(e))
 
     try:
-        subscription_created = create_subscription(subscription)
+        subscription_created = db.create_subscription(subscription)
     except IntegrityError as e:
-        raise ConflictError(f"Error while saving subscription in DB: {str(e)}")
+        raise ConflictError(f"Error while saving subscription in DB")
 
-    return subscription_created
+    return subscription_created, 201
 
 
 @marshal_with(SubscriptionSchema)
 def put_subscription(subscription_id, subscription_data):
-    subscription = db_get_subscription_by_id(subscription_id)
+    subscription = db.get_subscription_by_id(subscription_id)
 
     if subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
@@ -81,7 +80,7 @@ def put_subscription(subscription_id, subscription_data):
         raise BadRequestError(str(e))
 
     try:
-        subscription_updated = update_subscription(subscription)
+        subscription_updated = db.update_subscription(subscription)
     except IntegrityError:
         raise ConflictError("Error while saving subscription in DB")
 

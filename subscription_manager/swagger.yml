@@ -96,7 +96,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/TopicPost'
+            $ref: '#/definitions/TopicPut'
         - name: topic_id
           in: path
           description: The id of a topic
@@ -206,7 +206,7 @@ paths:
           in: body
           required: true
           schema:
-            $ref: '#/definitions/SubscriptionPost'
+            $ref: '#/definitions/SubscriptionPut'
         - name: subscription_id
           in: path
           description: The id of a subscription
@@ -233,6 +233,15 @@ definitions:
   TopicPost:
     description: Represents the available information of a topic
     type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+
+  TopicPut:
+    description: Represents the available information of a topic
+    type: object
     properties:
       name:
         type: string
@@ -251,6 +260,19 @@ definitions:
     type: object
     required:
       - topic_id
+    properties:
+      topic_id:
+        type: number
+      active:
+        type: boolean
+      qos:
+        type: string
+      durable:
+        type: boolean
+
+  SubscriptionPut:
+    description: Represents the available information of a subscription
+    type: object
     properties:
       topic_id:
         type: number
