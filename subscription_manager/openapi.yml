@@ -275,14 +275,18 @@ paths:
 components:
   schemas:
     TopicName:
+      description: the name of the topic
       type: string
       example: 'Airport arrivals'
     QOS:
+      description: Quality of Service value to be passed to the broker
       type: string
       enum: [
         'EXACTLY_ONCE'
       ]
+      example: 'EXACTLY_ONCE'
     TopicPost:
+      description: the data to be sent in order to create a new topic
       type: object
       required:
         - name
@@ -290,11 +294,13 @@ components:
         name:
           $ref: '#/components/schemas/TopicName'
     TopicPut:
+      description: the data to be sent in order to update an existing topic
       type: object
       properties:
         name:
           $ref: '#/components/schemas/TopicName'
     Topic:
+      description: the topic data returned back from the server
       allOf:
         - $ref: '#/components/schemas/TopicPost'
         - type: object
@@ -303,32 +309,39 @@ components:
               type: number
               example: 1
     SubscriptionPost:
-      description: Represents the available information of a subscription
+      description: the data to be sent in order to create a new subscription
       type: object
       required:
         - topic_id
       properties:
         topic_id:
           type: number
+          example: 1
         active:
           type: boolean
+          example: true
         qos:
           $ref: '#/components/schemas/QOS'
         durable:
           type: boolean
+          example: true
     SubscriptionPut:
-      description: Represents the available information of a subscription
+      description: the data to be sent in order to update an existing subscription
       type: object
       properties:
         topic_id:
           type: number
+          example: 1
         active:
           type: boolean
+          example: true
         qos:
           $ref: '#/components/schemas/QOS'
         durable:
           type: boolean
+          example: true
     Subscription:
+      description: the subscription data returned back from the server
       type: object
       properties:
         topic:
@@ -336,14 +349,19 @@ components:
           $ref: '#/components/schemas/Topic'
         id:
           type: number
+          example: 1
         queue:
           type: string
+          format: uuid
+          example: ef7a1a2c219d4f52a6d8593387318e26
         active:
           type: boolean
+          example: true
         qos:
           $ref: '#/components/schemas/QOS'
         durable:
           type: boolean
+          example: true
     Error:
       description: Error structure (RFC 7807 compliant - https://tools.ietf.org/html/rfc7807)
       type: object
