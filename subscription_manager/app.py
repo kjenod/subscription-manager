@@ -34,7 +34,7 @@ from swagger_ui_bundle import swagger_ui_3_path
 from pkg_resources import resource_filename
 
 from subscription_manager import VERSION, DESCRIPTION, BASE_PATH
-from subscription_manager.base.flask import configure_flask
+from subscription_manager.base.flask import configure_flask, configure_logging
 from subscription_manager.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -59,6 +59,8 @@ def create_app(config_file):
 
     configure_flask(app, {})
 
+    configure_logging(app.config)
+
     _configure_db(db, app)
 
     return app
@@ -66,10 +68,6 @@ def create_app(config_file):
 
 def _load_config(app, filename):
     app.config.from_pyfile(filename)
-
-    # app_config_file = os.getenv('FLASK_APPLICATION_CONFIG')
-    # if app_config_file:
-    #     app.config.from_pyfile(app_config_file)
 
 
 def _configure_db(db, app):

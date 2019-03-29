@@ -27,6 +27,8 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import logging.config
+
 from flask import jsonify
 from werkzeug.exceptions import default_exceptions
 
@@ -39,6 +41,11 @@ def configure_flask(app, config):
     app.config.from_mapping(config)
 
     _configure_error_handling(app)
+
+
+def configure_logging(config):
+    logging.config.dictConfig(config['LOGGING'])
+
 
 def _configure_error_handling(app):
     for status_code in default_exceptions.keys():

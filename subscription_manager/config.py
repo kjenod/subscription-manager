@@ -30,6 +30,41 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 
 __author__ = "EUROCONTROL (SWIM)"
 
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+            'level': 'DEBUG'
+        }
+    },
+    'formatters': {
+            'default': {
+                'class': 'logging.Formatter',
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            }
+    },
+    'disable_existing_loggers': False,
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG'
+    },
+    'loggers': {
+        'bravado_core': {
+            'level': 'INFO'
+        },
+        'connexion': {
+            'level': 'INFO'
+        },
+        'openapi_spec_validator': {
+            'level': 'INFO'
+        },
+        'requests': {
+            'level': 'INFO'
+        }
+    },
+}
 
 SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://alex:alex@localhost:5432/subscriptions'
 SQLALCHEMY_TRACK_MODIFICATIONS = False  # silence the deprecation warning

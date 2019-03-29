@@ -27,12 +27,17 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import logging
 import typing as t
 from http import HTTPStatus
 
+from flask import current_app
 from werkzeug.exceptions import HTTPException
+from werkzeug.local import LocalProxy
 
 __author__ = "EUROCONTROL (SWIM)"
+
+_logger = LocalProxy(lambda: logging.getLogger(current_app.name))
 
 
 class APIError(Exception):
@@ -89,6 +94,8 @@ def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str,
         status = HTTPStatus.INTERNAL_SERVER_ERROR.value
         title = 'Internal Server Error'
         detail = 'The server has encountered an error during the request' + str(error)
+
+        _logger.error(detail, exc_info=True)
 
     body = {
         "status": status,
