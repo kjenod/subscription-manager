@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from flask import jsonify
 from werkzeug.exceptions import default_exceptions
 
-from subscription_manager.base.errors import process_error
+from subscription_manager.backend.errors import process_error
 
 __author__ = "EUROCONTROL (SWIM)"
 

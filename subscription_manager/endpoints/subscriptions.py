@@ -31,7 +31,7 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from subscription_manager.base.errors import ConflictError, NotFoundError, BadRequestError
+from subscription_manager.backend.errors import ConflictError, NotFoundError, BadRequestError
 from subscription_manager.db import subscriptions as db
 from subscription_manager.endpoints.schemas import marshal_with, SubscriptionSchema, unmarshal
 
