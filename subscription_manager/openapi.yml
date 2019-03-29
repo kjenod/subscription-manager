@@ -1,0 +1,361 @@
+# Copyright 2019 EUROCONTROL
+# ==========================================
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+# following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+#    disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# ==========================================
+#
+# Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative:
+# http://opensource.org/licenses/BSD-3-Clause
+#
+# Details on EUROCONTROL: http://www.eurocontrol.int
+
+openapi: 3.0.0
+
+servers:
+  - description: SWIM Subscription Manager
+    url: /subscription-manager/api/1.0
+info:
+  description: SWIM Subscription Manager
+  version: "1.0.0"
+  title: SWIM Subscription Manager API
+#  contact:
+#    email: you@your-company.com
+#  license:
+#    name: Apache 2.0
+#    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: topics
+    description: Operations related to topics a service can subscribe to
+  - name: subscriptions
+    description: Operations related to (un)subscribing to a topic
+paths:
+  /topics/:
+    get:
+      tags:
+        - topics
+      summary: retrieves all available topics
+      operationId: subscription_manager.endpoints.topics.get_topics
+      responses:
+        '200':
+          description: lists all available topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - topics
+      summary: creates a new topic
+      operationId: subscription_manager.endpoints.topics.post_topic
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicPost'
+        description: topic data to add
+      responses:
+        '201':
+          description: topic created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+        '400':
+          description: 'invalid input, object invalid'
+        '409':
+          description: an existing item already exists or a general DB conflict
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /topics/{topic_id}:
+    get:
+      tags:
+        - topics
+      summary: retrieves a topic by its id
+      operationId: subscription_manager.endpoints.topics.get_topic
+      parameters:
+        - in: path
+          name: topic_id
+          description: the id of the requested topic
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: the requested topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '404':
+          description:  topic does not exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - topics
+      summary: updates an existing topic
+      operationId: subscription_manager.endpoints.topics.put_topic
+      parameters:
+        - in: path
+          name: topic_id
+          description: the id of the topic to be updated
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopicPut'
+      responses:
+        '200':
+          description: the requested topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+        '404':
+          description:  topic does not exist
+        '400':
+          description: 'invalid input, object invalid'
+        '409':
+          description: an existing item already exists or a general DB conflict
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /subscriptions/:
+    get:
+      tags:
+        - subscriptions
+      summary: retrieves all available subscriptions
+      operationId: subscription_manager.endpoints.subscriptions.get_subscriptions
+      responses:
+        '200':
+          description: lists all available subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - subscriptions
+      summary: creates a new subscription
+      operationId: subscription_manager.endpoints.subscriptions.post_subscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionPost'
+        description: subscription data to add
+      responses:
+        '201':
+          description: subscription created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+        '400':
+          description: 'invalid input, object invalid'
+        '409':
+          description: an existing item already exists or a general DB conflict
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /subscriptions/{subscription_id}:
+    get:
+      tags:
+        - subscriptions
+      summary: retrieves a subscription by its id
+      operationId: subscription_manager.endpoints.subscriptions.get_subscription
+      parameters:
+        - in: path
+          name: subscription_id
+          description: the id of the requested subscription
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: the requested subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '404':
+          description:  subscription does not exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - subscriptions
+      summary: updates an existing subscription
+      operationId: subscription_manager.endpoints.subscriptions.put_subscription
+      parameters:
+        - in: path
+          name: subscription_id
+          description: the id of the subscription to be updated
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionPut'
+      responses:
+        '200':
+          description: the requested subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '404':
+          description:  topic does not exist
+        '400':
+          description: 'invalid input, object invalid'
+        '409':
+          description: an existing item already exists or a general DB conflict
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    TopicName:
+      type: string
+      example: 'Airport arrivals'
+    TopicPost:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          $ref: '#/components/schemas/TopicName'
+    TopicPut:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TopicName'
+    Topic:
+      allOf:
+        - $ref: '#/components/schemas/TopicPost'
+        - type: object
+          properties:
+            id:
+              type: number
+              example: 1
+    SubscriptionPost:
+      description: Represents the available information of a subscription
+      type: object
+      required:
+        - topic_id
+      properties:
+        topic_id:
+          type: number
+        active:
+          type: boolean
+        qos:
+          type: string
+        durable:
+          type: boolean
+    SubscriptionPut:
+      description: Represents the available information of a subscription
+      type: object
+      properties:
+        topic_id:
+          type: number
+        active:
+          type: boolean
+        qos:
+          type: string
+        durable:
+          type: boolean
+    Subscription:
+      type: object
+      properties:
+        topic:
+          type: object
+          $ref: '#/components/schemas/Topic'
+        id:
+          type: number
+        queue:
+          type: string
+        active:
+          type: boolean
+        qos:
+          type: string
+        durable:
+          type: boolean
+    Error:
+      description: Error structure (RFC 7807 compliant - https://tools.ietf.org/html/rfc7807)
+      type: object
+      required:
+        - title
+        - detail
+        - status
+      properties:
+        title:
+          type: string
+          description: A short, human-readable summary of the problem
+          example: Internal Server Error
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem
+          example: The server has encountered an error during the request
+        status:
+          type: integer
+          description: The HTTP response code
+          example: 500

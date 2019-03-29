@@ -27,6 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
@@ -53,9 +54,9 @@ def get_topic(topic_id):
 
 
 @marshal_with(TopicSchema)
-def post_topic(topic_data):
+def post_topic():
     try:
-        topic = unmarshal(TopicSchema, topic_data)
+        topic = unmarshal(TopicSchema, request.get_json())
     except ValidationError as e:
         raise BadRequestError(str(e))
 
@@ -68,14 +69,14 @@ def post_topic(topic_data):
 
 
 @marshal_with(TopicSchema)
-def put_topic(topic_id, topic_data):
+def put_topic(topic_id):
     topic = db.get_topic_by_id(topic_id)
 
     if topic is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")
 
     try:
-        topic = unmarshal(TopicSchema, topic_data, instance=topic)
+        topic = unmarshal(TopicSchema, request.get_json(), instance=topic)
     except ValidationError as e:
         raise BadRequestError(str(e))
 

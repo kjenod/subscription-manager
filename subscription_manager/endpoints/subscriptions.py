@@ -27,6 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
@@ -53,9 +54,9 @@ def get_subscription(subscription_id):
 
 
 @marshal_with(SubscriptionSchema)
-def post_subscription(subscription_data):
+def post_subscription():
     try:
-        subscription = unmarshal(SubscriptionSchema, subscription_data)
+        subscription = unmarshal(SubscriptionSchema, request.get_json())
     except ValidationError as e:
         raise BadRequestError(str(e))
 
@@ -68,14 +69,14 @@ def post_subscription(subscription_data):
 
 
 @marshal_with(SubscriptionSchema)
-def put_subscription(subscription_id, subscription_data):
+def put_subscription(subscription_id):
     subscription = db.get_subscription_by_id(subscription_id)
 
     if subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
     try:
-        subscription = unmarshal(SubscriptionSchema, subscription_data, instance=subscription)
+        subscription = unmarshal(SubscriptionSchema, request.get_json(), instance=subscription)
     except ValidationError as e:
         raise BadRequestError(str(e))
 

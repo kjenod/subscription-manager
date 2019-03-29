@@ -58,7 +58,7 @@ def test_get_topic__topic_does_not_exist__returns_404(test_client):
     assert 404 == response.status_code
 
 
-def test_get_topic__topic_exists_and_its_data_is_returned(test_client, generate_topic):
+def test_get_topic__topic_exists_and_is_returned(test_client, generate_topic):
     topic = generate_topic('test_topic')
 
     url = f'{BASE_PATH}/topics/{topic.id}'

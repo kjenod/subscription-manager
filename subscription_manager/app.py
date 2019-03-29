@@ -27,10 +27,10 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import os
 from pathlib import Path
 
 import connexion
+from swagger_ui_bundle import swagger_ui_3_path
 from pkg_resources import resource_filename
 
 from subscription_manager import VERSION, DESCRIPTION, BASE_PATH
@@ -41,14 +41,15 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 def create_app(config_file):
-    connexion_app = connexion.App(__name__)
+    options = {'swagger_path': swagger_ui_3_path}
+    connexion_app = connexion.App(__name__, options=options)
 
     connexion_app.add_api(
-        Path('swagger.yml'),
-        arguments=(dict(
-            version=VERSION,
-            description=DESCRIPTION,
-            base_path=BASE_PATH)),
+        Path('openapi.yml'),
+        # arguments=(dict(
+        #     version=VERSION,
+        #     description=DESCRIPTION,
+        #     base_path=BASE_PATH)),
         strict_validation=True
     )
 
