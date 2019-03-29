@@ -149,7 +149,7 @@ def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic
     assert 400 == response.status_code
 
     response_data = json.loads(response.data)
-    assert f"qos should be one of {QOS.all()}" == response_data['detail']
+    assert f"'invalid' is not one of {QOS.all()}" == response_data['detail']
 
 
 def test_post_subscription__invalid_topic_id__returns_400(test_client):
@@ -253,7 +253,7 @@ def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscr
     assert 400 == response.status_code
 
     response_data = json.loads(response.data)
-    assert f"qos should be one of {QOS.all()}" == response_data['detail']
+    assert f"'invalid' is not one of {QOS.all()}" == response_data['detail']
 
 
 def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_subscription):

@@ -67,13 +67,6 @@ def validate_topic_id(topic_id):
         raise ValidationError(f"there is no topic with id {topic_id}")
 
 
-def validate_qos(qos):
-    all_qos = QOS.all()
-
-    if qos not in all_qos:
-        raise ValidationError(f"qos should be one of {all_qos}")
-
-
 class SubscriptionSchema(BaseSchema):
 
     class Meta:
@@ -81,17 +74,12 @@ class SubscriptionSchema(BaseSchema):
         load_only = ("topic_id",)
         dump_only = ("id", "queue", "topic")
 
-    qos = String(validate=validate_qos)
     topic_id = Integer(validate=validate_topic_id)
     topic = Nested(TopicSchema)
 
     @post_dump
     def serialize_qos(self, subscription_data):
-        qos_model_name, qos_property = subscription_data['qos'].split(".")
-
-        subscription_data['qos'] = qos_property
-
-        return subscription_data
+        subscription_data['qos'] = subscription_data['qos'].value
 
 
 def unmarshal(schema_class, data, instance=None):

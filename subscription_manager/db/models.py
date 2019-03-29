@@ -57,7 +57,7 @@ class Subscription(db.Model):
 
     queue = db.Column(db.String(128), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=True)
-    qos = db.Column(db.Enum(QOS), nullable=False, default=QOS.EXACTLY_ONCE)
+    qos = db.Column(db.Enum(QOS), nullable=False, default=QOS.EXACTLY_ONCE.value)
     durable = db.Column(db.Boolean, nullable=False, default=True)
 
     topic = db.relationship("Topic")

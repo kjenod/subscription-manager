@@ -277,6 +277,11 @@ components:
     TopicName:
       type: string
       example: 'Airport arrivals'
+    QOS:
+      type: string
+      enum: [
+        'EXACTLY_ONCE'
+      ]
     TopicPost:
       type: object
       required:
@@ -308,7 +313,7 @@ components:
         active:
           type: boolean
         qos:
-          type: string
+          $ref: '#/components/schemas/QOS'
         durable:
           type: boolean
     SubscriptionPut:
@@ -320,7 +325,7 @@ components:
         active:
           type: boolean
         qos:
-          type: string
+          $ref: '#/components/schemas/QOS'
         durable:
           type: boolean
     Subscription:
@@ -336,7 +341,7 @@ components:
         active:
           type: boolean
         qos:
-          type: string
+          $ref: '#/components/schemas/QOS'
         durable:
           type: boolean
     Error:
