@@ -27,47 +27,33 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import yaml
+import logging.config
+from pkg_resources import resource_filename
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-TESTING = True
+def _from_yaml(filename):
+    if not filename.endswith(".yml"):
+        raise ValueError("YAML config files should end with '.yml' extension (RTFMG).")
 
-LOGGING = {
-    'version': 1,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'default',
-            'level': 'DEBUG'
-        }
-    },
-    'formatters': {
-            'default': {
-                'class': 'logging.Formatter',
-                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            }
-    },
-    'disable_existing_loggers': False,
-    'root': {
-        'handlers': ['console'],
-        'level': 'DEBUG'
-    },
-    'loggers': {
-        'bravado_core': {
-            'level': 'INFO'
-        },
-        'connexion': {
-            'level': 'INFO'
-        },
-        'openapi_spec_validator': {
-            'level': 'INFO'
-        },
-        'requests': {
-            'level': 'INFO'
-        }
-    },
-}
+    with open(filename) as f:
+        obj = yaml.load(f, Loader=yaml.FullLoader)
 
-SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://alex:alex@localhost:5432/testing'
-SQLALCHEMY_TRACK_MODIFICATIONS = False  # silence the deprecation warning
+    return obj or None
+
+
+def load_app_config(package, filename=None):
+    default_config_file = resource_filename(package, 'config.yml')
+    config = _from_yaml(default_config_file)
+
+    if filename:
+        extra_config = _from_yaml(filename)
+        config.update(extra_config)
+
+    return config
+
+
+def configure_logging(app):
+    logging.config.dictConfig(app.config['LOGGING'])

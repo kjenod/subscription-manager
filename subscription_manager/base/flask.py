@@ -27,8 +27,6 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import logging.config
-
 from flask import jsonify
 from werkzeug.exceptions import default_exceptions
 
@@ -37,14 +35,8 @@ from subscription_manager.base.errors import process_error
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def configure_flask(app, config):
-    app.config.from_mapping(config)
-
+def configure_flask(app):
     _configure_error_handling(app)
-
-
-def configure_logging(config):
-    logging.config.dictConfig(config['LOGGING'])
 
 
 def _configure_error_handling(app):

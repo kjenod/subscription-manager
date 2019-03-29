@@ -1,0 +1,3 @@
+
+SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://alex:alex@localhost:5432/subscriptions'
+SQLALCHEMY_TRACK_MODIFICATIONS: False  # silence the deprecation warning

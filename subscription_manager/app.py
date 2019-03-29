@@ -33,8 +33,8 @@ import connexion
 from swagger_ui_bundle import swagger_ui_3_path
 from pkg_resources import resource_filename
 
-from subscription_manager import VERSION, DESCRIPTION, BASE_PATH
-from subscription_manager.base.flask import configure_flask, configure_logging
+from subscription_manager.base.flask import configure_flask
+from subscription_manager.base.config import configure_logging, load_app_config
 from subscription_manager.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -44,30 +44,21 @@ def create_app(config_file):
     options = {'swagger_path': swagger_ui_3_path}
     connexion_app = connexion.App(__name__, options=options)
 
-    connexion_app.add_api(
-        Path('openapi.yml'),
-        # arguments=(dict(
-        #     version=VERSION,
-        #     description=DESCRIPTION,
-        #     base_path=BASE_PATH)),
-        strict_validation=True
-    )
+    connexion_app.add_api(Path('openapi.yml'), strict_validation=True)
 
     app = connexion_app.app
 
-    _load_config(app, config_file)
+    app_config = load_app_config(package=__name__, filename=config_file)
 
-    configure_flask(app, {})
+    app.config.update(app_config)
 
-    configure_logging(app.config)
+    configure_flask(app)
+
+    configure_logging(app)
 
     _configure_db(db, app)
 
     return app
-
-
-def _load_config(app, filename):
-    app.config.from_pyfile(filename)
 
 
 def _configure_db(db, app):
@@ -78,6 +69,6 @@ def _configure_db(db, app):
 
 
 if __name__ == '__main__':
-    config_file = resource_filename(__name__, 'config.py')
+    config_file = resource_filename(__name__, 'dev_config.yml')
     app = create_app(config_file)
     app.run(port=8080, debug=False)

@@ -37,7 +37,7 @@ from subscription_manager.db import db as _db
 @pytest.yield_fixture(scope='session')
 def app():
 
-    config_file = resource_filename(__name__, 'test_config.py')
+    config_file = resource_filename(__name__, 'test_config.yml')
     _app = create_app(config_file)
     ctx = _app.app_context()
     ctx.push()
