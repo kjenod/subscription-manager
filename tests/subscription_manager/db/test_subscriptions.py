@@ -29,19 +29,19 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import pytest
 
+from backend.db import db_save
 from subscription_manager.db import Subscription
 from subscription_manager.db.subscriptions import get_subscription_by_id, get_subscriptions, create_subscription, update_subscription
-from subscription_manager.db.utils import db_save
-from tests.utils import make_subscription
+from tests.subscription_manager.utils import make_subscription
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @pytest.fixture
-def generate_subscription():
+def generate_subscription(session):
     def _generate_subscription():
         subscription = make_subscription()
-        return db_save(subscription)
+        return db_save(session, subscription)
 
     return _generate_subscription
 

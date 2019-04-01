@@ -33,8 +33,8 @@ import connexion
 from swagger_ui_bundle import swagger_ui_3_path
 from pkg_resources import resource_filename
 
-from subscription_manager.backend.flask import configure_flask
-from subscription_manager.backend.config import configure_logging, load_app_config
+from backend.flask import configure_flask
+from backend.config import configure_logging, load_app_config
 from subscription_manager.db import db
 
 __author__ = "EUROCONTROL (SWIM)"

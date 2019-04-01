@@ -30,8 +30,8 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from subscription_manager.db import Topic
-from subscription_manager.db.utils import db_save
+from backend.db import db_save
+from subscription_manager.db import db, Topic
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -50,8 +50,8 @@ def get_topics():
 
 
 def create_topic(topic):
-    return db_save(topic)
+    return db_save(db.session, topic)
 
 
 def update_topic(topic):
-    return db_save(topic)
+    return db_save(db.session, topic)

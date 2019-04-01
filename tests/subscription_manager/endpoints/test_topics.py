@@ -33,19 +33,19 @@ from unittest import mock
 import pytest
 from sqlalchemy.exc import IntegrityError
 
+from backend.db import db_save
 from subscription_manager import BASE_PATH
 from subscription_manager.db.topics import get_topic_by_id
-from subscription_manager.db.utils import db_save
-from tests.utils import make_topic
+from tests.subscription_manager.utils import make_topic
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @pytest.fixture
-def generate_topic():
+def generate_topic(session):
     def _generate_topic(name):
         topic = make_topic(name)
-        return db_save(topic)
+        return db_save(session, topic)
 
     return _generate_topic
 
