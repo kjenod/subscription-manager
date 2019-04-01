@@ -27,28 +27,16 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from flask import jsonify
-from werkzeug.exceptions import default_exceptions
-
-from subscription_manager.backend.errors import process_error
+from sqlalchemy.exc import IntegrityError
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def configure_flask(app):
-    _configure_error_handling(app)
-
-
-def _configure_error_handling(app):
-    for status_code in default_exceptions.keys():
-        app.register_error_handler(status_code, _handle_generic_error)
-    app.register_error_handler(Exception, _handle_generic_error)
-
-
-def _handle_generic_error(error):
-    body = process_error(error)
-    response = jsonify(**body)
-    response.mimetype = 'application/problem+json'
-    response.status_code = body['status']
-
-    return response
+def db_save(session, obj):
+    try:
+        session.add(obj)
+        session.commit()
+        return obj
+    except IntegrityError:
+        session.rollback()
+        raise
