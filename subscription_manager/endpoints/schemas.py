@@ -27,14 +27,13 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from functools import wraps
 
 from marshmallow import post_dump, ValidationError
-from marshmallow.fields import Nested, String, Integer
+from marshmallow.fields import Nested, Integer
 from marshmallow_sqlalchemy import ModelSchemaOpts, ModelSchema
 
 from subscription_manager.db import db
-from subscription_manager.db.models import Topic, Subscription, QOS
+from subscription_manager.db.models import Topic, Subscription
 from subscription_manager.db.topics import get_topic_by_id
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -80,29 +79,3 @@ class SubscriptionSchema(BaseSchema):
     @post_dump
     def serialize_qos(self, subscription_data):
         subscription_data['qos'] = subscription_data['qos'].value
-
-
-def unmarshal(schema_class, data, instance=None):
-    obj, errors = schema_class().load(data, instance=instance)
-    if errors:
-        raise ValidationError(", ".join(list(errors.values())[0]))
-
-    return obj
-
-
-def marshal_with(schema_class, many=False):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-
-            if isinstance(result, tuple):
-                obj, status_code = result
-            else:
-                obj, status_code = result, 200
-
-            marshaled_obj = schema_class(many=many).dump(obj).data
-
-            return marshaled_obj, status_code
-        return wrapper
-    return decorator

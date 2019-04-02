@@ -30,7 +30,7 @@ openapi: 3.0.0
 
 servers:
   - description: SWIM Auth Server
-    url: /auth_server-server/api/1.0
+    url: /auth-server/api/1.0
 info:
   description: SWIM Auth Server
   version: "1.0.0"

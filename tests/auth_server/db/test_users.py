@@ -85,10 +85,9 @@ def test_create_user():
     assert isinstance(db_user, User)
     assert isinstance(db_user.id, int)
     assert user.username == db_user.username
+    assert user.password == db_user.password
     assert user.active == db_user.active
     assert user.created_at == db_user.created_at
-    assert db_user.password.startswith(HASH_METHOD)
-    assert check_password_hash(db_user.password, 'password') is True
 
 
 def test_update_user(generate_user):

@@ -31,7 +31,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from auth_server.db import User, db
 from auth_server.core.auth import hash_password
-from backend.db import db_save
+from backend.db import db_save, property_has_changed
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -50,9 +50,6 @@ def get_users():
 
 
 def create_user(user):
-    # hash password before saving in DB
-    user.password = hash_password(user.password)
-
     return db_save(db.session, user)
 
 

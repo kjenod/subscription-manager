@@ -33,7 +33,8 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.errors import ConflictError, NotFoundError, BadRequestError
 from subscription_manager.db import subscriptions as db
-from subscription_manager.endpoints.schemas import marshal_with, SubscriptionSchema, unmarshal
+from subscription_manager.endpoints.schemas import SubscriptionSchema
+from backend.marshal import unmarshal, marshal_with
 
 __author__ = "EUROCONTROL (SWIM)"
 

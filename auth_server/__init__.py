@@ -32,4 +32,4 @@ __author__ = "EUROCONTROL (SWIM)"
 
 VERSION = "1.0"
 DESCRIPTION = "Auth Server API"
-BASE_PATH = f"/auth_server-server/api/{VERSION}"
+BASE_PATH = f"/auth-server/api/{VERSION}"
