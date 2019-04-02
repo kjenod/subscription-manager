@@ -28,12 +28,10 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import pytest
-from werkzeug.security import check_password_hash
 
-from auth_server.core.auth import HASH_METHOD
 from backend.db import db_save
 from auth_server.db import User
-from auth_server.db.users import get_user_by_id, get_users, create_user, update_user
+from auth_server.db.users import get_user_by_id, get_users, save_user, get_user_by_username
 from tests.auth_server.utils import make_user
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -61,6 +59,19 @@ def test_get_user_by_id__object_exists_and_is_returned(generate_user):
     assert user == db_user
 
 
+def test_get_user_by_username__does_not_exist__returns_none():
+    assert get_user_by_username('invalid') is None
+
+
+def test_get_user_by_username__object_exists_and_is_returned(generate_user):
+    user = generate_user()
+
+    db_user = get_user_by_username(user.username)
+
+    assert isinstance(db_user, User)
+    assert user == db_user
+
+
 def test_get_users__no_user_in_db__returns_empty_list(generate_user):
     db_users = get_users()
 
@@ -80,7 +91,7 @@ def test_create_user():
     user = make_user()
     user.password = 'password'
 
-    db_user = create_user(user)
+    db_user = save_user(user)
 
     assert isinstance(db_user, User)
     assert isinstance(db_user.id, int)
@@ -95,7 +106,7 @@ def test_update_user(generate_user):
 
     user.username = 'new username'
 
-    updated_user = update_user(user)
+    updated_user = save_user(user)
 
     assert isinstance(updated_user, User)
     assert 'new username' == updated_user.username

@@ -30,8 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from auth_server.db import User, db
-from auth_server.core.auth import hash_password
-from backend.db import db_save, property_has_changed
+from backend.db import db_save
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -45,14 +44,18 @@ def get_user_by_id(user_id):
     return result
 
 
+def get_user_by_username(username):
+    try:
+        result = User.query.filter_by(username=username).one()
+    except (NoResultFound, MultipleResultsFound):
+        result = None
+
+    return result
+
+
 def get_users():
     return User.query.all()
 
 
-def create_user(user):
+def save_user(user):
     return db_save(db.session, user)
-
-
-def update_user(user):
-    return db_save(db.session, user)
-

@@ -67,7 +67,7 @@ def post_user():
     user.password = hash_password(user.password)
 
     try:
-        user_created = user_service.create_user(user)
+        user_created = user_service.save_user(user)
     except IntegrityError:
         raise ConflictError("Error while saving user in DB")
 
@@ -91,7 +91,7 @@ def put_user(user_id):
         user.password = hash_password(user.password)
 
     try:
-        user_updated = user_service.update_user(user)
+        user_updated = user_service.save_user(user)
     except IntegrityError:
         raise ConflictError("Error while saving user in DB")
 

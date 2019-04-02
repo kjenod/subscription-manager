@@ -120,7 +120,7 @@ def test_post_user__missing_required_property__returns_400(test_client, missing_
     assert f"'{missing_property}' is a required property" == response_data['detail']
 
 
-@mock.patch('auth_server.db.users.create_user', side_effect=IntegrityError(None, None, None))
+@mock.patch('auth_server.db.users.save_user', side_effect=IntegrityError(None, None, None))
 def test_post_user__db_error__returns_409(mock_create_user, test_client, generate_user):
     user_data = {
         'username': 'username',
@@ -160,7 +160,7 @@ def test_post_user__user_is_saved_in_db(test_client):
     assert check_password_hash(db_user.password, 'password') is True
 
 
-@mock.patch('auth_server.db.users.update_user', side_effect=IntegrityError(None, None, None))
+@mock.patch('auth_server.db.users.save_user', side_effect=IntegrityError(None, None, None))
 def test_put_user__db_error__returns_409(mock_update_user, test_client, generate_user):
     user = generate_user()
 
