@@ -27,23 +27,35 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from sqlalchemy.exc import IntegrityError
+from functools import wraps
+
+from marshmallow import ValidationError
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def db_save(session, obj):
-    try:
-        session.add(obj)
-        session.commit()
-        return obj
-    except IntegrityError:
-        session.rollback()
-        raise
+def unmarshal(schema_class, data, instance=None, **kwargs):
+    obj, errors = schema_class(**kwargs).load(data, instance=instance)
+    if errors:
+        error_per_property = [f"'{property}': {error_message}" for property, error_message in errors.items()]
+        raise ValidationError(", ".join(error_per_property))
+
+    return obj
 
 
-def property_has_changed(db, obj, property):
-    state = db.inspect(obj)
-    history = state.get_history(property, True)
+def marshal_with(schema_class, many=False):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
 
-    return history.has_changes()
+            if isinstance(result, tuple):
+                obj, status_code = result
+            else:
+                obj, status_code = result, 200
+
+            marshaled_obj = schema_class(many=many).dump(obj).data
+
+            return marshaled_obj, status_code
+        return wrapper
+    return decorator
