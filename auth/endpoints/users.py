@@ -27,28 +27,45 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import typing as t
+
 from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from auth.auth import hash_password, admin_required
-from backend.db import property_has_changed, db
+from auth.auth import hash_password
+from backend.db import property_has_changed
 from backend.errors import NotFoundError, ConflictError, BadRequestError
-from auth.db import users as user_service
+from auth.db import users as user_service, User
 from auth.endpoints.schemas import UserSchema
 from backend.marshal import marshal_with, unmarshal
+from backend.typing import JSONType
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @marshal_with(UserSchema, many=True)
-def get_users():
+def get_users() -> JSONType:
+    """
+    GET /users/ endpoint
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+    """
+
     return user_service.get_users()
 
 
-
 @marshal_with(UserSchema)
-def get_user(user_id):
+def get_user(user_id: int) -> JSONType:
+    """
+    GET /users/{user_id}
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.NotFoundError (HTTP error 404)
+    """
+
     result = user_service.get_user_by_id(user_id)
 
     if result is None:
@@ -57,9 +74,16 @@ def get_user(user_id):
     return result
 
 
-
 @marshal_with(UserSchema)
-def post_user():
+def post_user() -> t.Tuple[JSONType, int]:
+    """
+    POST /users/
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.BadRequestError (HTTP error 400)
+    """
+
     try:
         user = unmarshal(UserSchema, request.get_json())
     except ValidationError as e:
@@ -76,9 +100,17 @@ def post_user():
     return user_created, 201
 
 
-
 @marshal_with(UserSchema)
-def put_user(user_id):
+def put_user(user_id: int) -> JSONType:
+    """
+    PUT /users/{user_id}
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.NotFoundError (HTTP error 404)
+             backend.errors.BadRequestError (HTTP error 400)
+    """
+
     user = user_service.get_user_by_id(user_id)
 
     if user is None:
@@ -101,5 +133,8 @@ def put_user(user_id):
     return user_updated
 
 
-def _password_has_changed(user):
+def _password_has_changed(user: User) -> bool:
+    """
+    Indicates whether the password of the user has changed after being loaded from DB
+    """
     return property_has_changed(user, 'password')

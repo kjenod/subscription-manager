@@ -79,6 +79,9 @@ class ConflictError(APIError):
 
 def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str, str]:
     """
+    Depending on the incoming error it prepares a JSON serializable structure with all the necessary information of the
+    error to be returned as the Response body to the client.
+
     :param error: The error raised from the request
     :return: The response body of the error
     """

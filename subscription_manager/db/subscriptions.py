@@ -27,7 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-
+import typing as t
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from backend.db import db_save, db
@@ -37,7 +37,7 @@ from subscription_manager.db.utils import generate_queue
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_subscription_by_id(subscription_id):
+def get_subscription_by_id(subscription_id: int) -> t.Union[Subscription, None]:
     try:
         result = Subscription.query.get(subscription_id)
     except (NoResultFound, MultipleResultsFound):
@@ -46,16 +46,16 @@ def get_subscription_by_id(subscription_id):
     return result
 
 
-def get_subscriptions():
+def get_subscriptions() -> t.List[Subscription]:
     return Subscription.query.all()
 
 
-def create_subscription(subscription):
+def create_subscription(subscription: Subscription) -> t.Type[Subscription]:
     if subscription.queue is None:
         subscription.queue = generate_queue()
 
     return db_save(db.session, subscription)
 
 
-def update_subscription(subscription):
+def update_subscription(subscription: Subscription) -> object:
     return db_save(db.session, subscription)

@@ -35,7 +35,14 @@ from auth.auth import hash_password
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def make_user(username='username', password='password', is_admin=False):
+def make_user(username: str = 'username', password: str = 'password', is_admin: bool = False) -> User:
+    """
+
+    :param username:
+    :param password:
+    :param is_admin:
+    :return:
+    """
     return User(
         username=f'{username}_{uuid4().hex}',
         password=hash_password(password),

@@ -27,7 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from flask import jsonify
+import flask
 from werkzeug.exceptions import default_exceptions
 
 from backend.errors import process_error
@@ -35,19 +35,34 @@ from backend.errors import process_error
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def configure_flask(app):
+def configure_flask(app: flask.Flask):
+    """
+    Customizes a Flask app by adding extra configuration, i.e. error handling etc
+
+    :param app:
+    """
     _configure_error_handling(app)
 
 
-def _configure_error_handling(app):
+def _configure_error_handling(app: flask.Flask):
+    """
+    Registers error handlers for every kind of HTTP error
+
+    :param app:
+    """
     for status_code in default_exceptions.keys():
         app.register_error_handler(status_code, _handle_generic_error)
     app.register_error_handler(Exception, _handle_generic_error)
 
 
-def _handle_generic_error(error):
+def _handle_generic_error(error: Exception) -> flask.Response:
+    """
+    Prepares a HTTP error response to be returned to the client
+    :param error:
+    :return:
+    """
     body = process_error(error)
-    response = jsonify(**body)
+    response = flask.jsonify(**body)
     response.mimetype = 'application/problem+json'
     response.status_code = body['status']
 

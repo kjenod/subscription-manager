@@ -27,6 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import typing as t
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -36,7 +37,7 @@ from subscription_manager.db import Topic
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_topic_by_id(topic_id):
+def get_topic_by_id(topic_id: int) -> t.Union[Topic, None]:
     try:
         result = Topic.query.get(topic_id)
     except (NoResultFound, MultipleResultsFound):
@@ -45,13 +46,13 @@ def get_topic_by_id(topic_id):
     return result
 
 
-def get_topics():
+def get_topics() -> t.List[Topic]:
     return Topic.query.all()
 
 
-def create_topic(topic):
+def create_topic(topic: Topic) -> Topic:
     return db_save(db.session, topic)
 
 
-def update_topic(topic):
+def update_topic(topic: Topic) -> Topic:
     return db_save(db.session, topic)

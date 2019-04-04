@@ -27,12 +27,14 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import typing as t
 from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from auth.auth import admin_required
+from backend.auth import admin_required
 from backend.errors import NotFoundError, ConflictError, BadRequestError
+from backend.typing import JSONType
 from subscription_manager.db import topics as db
 from subscription_manager.endpoints.schemas import TopicSchema
 from backend.marshal import unmarshal, marshal_with
@@ -42,13 +44,28 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @admin_required
 @marshal_with(TopicSchema, many=True)
-def get_topics():
+def get_topics() -> JSONType:
+    """
+    GET /topics/
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+    """
+
     return db.get_topics()
 
 
 @admin_required
 @marshal_with(TopicSchema)
-def get_topic(topic_id):
+def get_topic(topic_id: int) -> JSONType:
+    """
+    GET /topic/{topic_id}
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.NotFoundError (HTTP error 404)
+    """
+
     result = db.get_topic_by_id(topic_id)
 
     if result is None:
@@ -59,7 +76,15 @@ def get_topic(topic_id):
 
 @admin_required
 @marshal_with(TopicSchema)
-def post_topic():
+def post_topic() -> t.Tuple[JSONType, int]:
+    """
+    POST /topics/
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.BadRequestError (HTTP error 400)
+    """
+
     try:
         topic = unmarshal(TopicSchema, request.get_json())
     except ValidationError as e:
@@ -75,7 +100,16 @@ def post_topic():
 
 @admin_required
 @marshal_with(TopicSchema)
-def put_topic(topic_id):
+def put_topic(topic_id: int) -> JSONType:
+    """
+    PUT /topics/{tpic_id}
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.NotFoundError (HTTP error 404)
+             backend.errors.BadRequestError (HTTP error 400)
+    """
+
     topic = db.get_topic_by_id(topic_id)
 
     if topic is None:

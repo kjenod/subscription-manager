@@ -27,12 +27,15 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import typing as t
+
 from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from auth.auth import admin_required
+from backend.auth import admin_required
 from backend.errors import ConflictError, NotFoundError, BadRequestError
+from backend.typing import JSONType
 from subscription_manager.db import subscriptions as db
 from subscription_manager.endpoints.schemas import SubscriptionSchema
 from backend.marshal import unmarshal, marshal_with
@@ -42,13 +45,29 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @admin_required
 @marshal_with(SubscriptionSchema, many=True)
-def get_subscriptions():
+def get_subscriptions() -> JSONType:
+    """
+    GET /subscriptions/
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+    """
+
     return db.get_subscriptions()
 
 
 @admin_required
 @marshal_with(SubscriptionSchema)
-def get_subscription(subscription_id):
+def get_subscription(subscription_id: int) -> JSONType:
+    """
+    GET /subscription/{subscription_id}
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.NotFoundError (HTTP error 404)
+
+    """
+
     result = db.get_subscription_by_id(subscription_id)
 
     if result is None:
@@ -58,7 +77,15 @@ def get_subscription(subscription_id):
 
 
 @marshal_with(SubscriptionSchema)
-def post_subscription():
+def post_subscription() -> t.Tuple[JSONType, int]:
+    """
+    POST /subscriptions/
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.BadRequestError (HTTP error 400)
+    """
+
     try:
         subscription = unmarshal(SubscriptionSchema, request.get_json())
     except ValidationError as e:
@@ -73,7 +100,16 @@ def post_subscription():
 
 
 @marshal_with(SubscriptionSchema)
-def put_subscription(subscription_id):
+def put_subscription(subscription_id: int) -> JSONType:
+    """
+    PUT /subscriptions/{subscription_id}
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.ForbiddenError (HTTP error 403)
+             backend.errors.NotFoundError (HTTP error 404)
+             backend.errors.BadRequestError (HTTP error 400)
+    """
+
     subscription = db.get_subscription_by_id(subscription_id)
 
     if subscription is None:

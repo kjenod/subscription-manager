@@ -28,58 +28,12 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import typing as t
-from functools import wraps
 
 import flask_sqlalchemy
-import marshmallow
-
-from backend.typing import ViewResponse, JSONType
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def unmarshal(schema_class: marshmallow.Schema,
-              data: t.Dict[str, t.Any],
-              instance: t.Optional[flask_sqlalchemy.model.Model] = None,
-              **kwargs: object) -> flask_sqlalchemy.model.Model:
-    """
-    Deserializes a dictionary into a Model.
-
-    :param schema_class:
-    :param data:
-    :param instance:
-    :param kwargs: extra arguments applying to Schema.load()
-    :return:
-    :raises: marshmallow.ValidationError
-    """
-    obj, errors = schema_class(**kwargs).load(data, instance=instance)
-    if errors:
-        error_per_property = [f"'{property}': {error_message}" for property, error_message in errors.items()]
-        raise marshmallow.ValidationError(", ".join(error_per_property))
-
-    return obj
-
-
-def marshal_with(schema_class: marshmallow.Schema, many: bool= False) -> t.Callable:
-    """
-    Decorator used to serialize the data returned by an endpoint view.
-
-    :param schema_class:
-    :param many: in case of se
-    :return:
-    """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            result: ViewResponse = func(*args, **kwargs)
-
-            if isinstance(result, tuple):
-                obj, status_code = result
-            else:
-                obj, status_code = result, 200
-
-            marshaled_obj: JSONType = schema_class(many=many).dump(obj).data
-
-            return marshaled_obj, status_code
-        return wrapper
-    return decorator
+JSONType = t.Union[t.Dict[str, t.Any], t.List[t.Any]]
+Serializable = t.Union[flask_sqlalchemy.model.Model, t.List[flask_sqlalchemy.model.Model]]
+ViewResponse = t.Union[t.Tuple[Serializable, int], Serializable]

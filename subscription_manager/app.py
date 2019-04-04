@@ -39,10 +39,9 @@ from backend.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
 
-# TODO: add JWT authentication
-# TODO: add doc strings
-# TODO: add type hints
+
 # TODO: separate backend?
+# TODO: add admin_required in users endpoints?
 
 def create_app(config_file):
     options = {'swagger_path': swagger_ui_3_path}

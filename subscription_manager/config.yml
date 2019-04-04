@@ -23,9 +23,6 @@ LOGGING:
     requests:
       level: INFO
 
-    bravado_core:
-      level: INFO
-
     openapi_spec_validator:
       level: INFO
 

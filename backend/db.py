@@ -27,25 +27,44 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import IntegrityError
+import flask_sqlalchemy as flask_sa
+import sqlalchemy as sa
+
 
 __author__ = "EUROCONTROL (SWIM)"
 
-db = SQLAlchemy()
+db = flask_sa.SQLAlchemy()
 
 
-def db_save(session, obj):
+def db_save(session: sa.orm.session.Session,
+            obj: flask_sa.model.Model) -> flask_sa.model.Model:
+    """
+    Saves an object in db and rollbacks before raising in case of DB error
+
+    :param session:
+    :param obj:
+    :return:
+    """
     try:
         session.add(obj)
         session.commit()
         return obj
-    except IntegrityError:
+    except sa.exc.IntegrityError:
         session.rollback()
         raise
 
 
-def property_has_changed(obj, property, db=db):
+def property_has_changed(obj: flask_sa.model.Model,
+                         property: str,
+                         db: flask_sa.SQLAlchemy = db) -> bool:
+    """
+    Indicates whether a property of an object has changed after it was loaded from DB.
+
+    :param obj:
+    :param property:
+    :param db:
+    :return:
+    """
     state = db.inspect(obj)
     history = state.get_history(property, True)
 

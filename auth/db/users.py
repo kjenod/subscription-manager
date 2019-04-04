@@ -27,6 +27,8 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import typing as t
+
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from werkzeug.security import check_password_hash
 
@@ -36,7 +38,12 @@ from backend.db import db_save, db
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_user_by_id(user_id):
+def get_user_by_id(user_id: int) -> t.Union[User, None]:
+    """
+
+    :param user_id: the id of the requested user
+    :return:
+    """
     try:
         result = User.query.get(user_id)
     except (NoResultFound, MultipleResultsFound):
@@ -45,7 +52,12 @@ def get_user_by_id(user_id):
     return result
 
 
-def get_user_by_username(username):
+def get_user_by_username(username: str) -> t.Union[User, None]:
+    """
+
+    :param username: the username of the requested user
+    :return:
+    """
     try:
         result = User.query.filter_by(username=username).one()
     except (NoResultFound, MultipleResultsFound):
@@ -54,18 +66,9 @@ def get_user_by_username(username):
     return result
 
 
-def get_users():
+def get_users() -> t.List[User]:
     return User.query.all()
 
 
-def save_user(user):
+def save_user(user: User) -> User:
     return db_save(db.session, user)
-
-
-def validate_user_credentials(username, password):
-    user = get_user_by_username(username)
-
-    if user is None or check_password_hash(user.password, password) is False:
-        raise ValueError('Wrong credentials')
-
-    return user

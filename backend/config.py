@@ -27,6 +27,9 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import typing as t
+
+import flask
 import yaml
 import logging.config
 from pkg_resources import resource_filename
@@ -34,7 +37,13 @@ from pkg_resources import resource_filename
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def _from_yaml(filename):
+def _from_yaml(filename: str) -> t.Union[t.Dict[str, t.Any], None]:
+    """
+    Converts a YAML file into a Python dict
+
+    :param filename:
+    :return:
+    """
     if not filename.endswith(".yml"):
         raise ValueError("YAML config files should end with '.yml' extension (RTFMG).")
 
@@ -44,7 +53,16 @@ def _from_yaml(filename):
     return obj or None
 
 
-def load_app_config(package, filename=None):
+def load_app_config(package: str, filename: t.Optional[str] = None) -> t.Dict[str, t.Any]:
+    """
+    It expects and loads a default config.yml under the package directory. Optionally, there might be an additional
+    config file provided which must also exist under the same directory. The second file overrides the configuration
+    of the default one.
+
+    :param package:
+    :param filename:
+    :return:
+    """
     default_config_file = resource_filename(package, 'config.yml')
     config = _from_yaml(default_config_file)
 
@@ -55,5 +73,43 @@ def load_app_config(package, filename=None):
     return config
 
 
-def configure_logging(app):
+def configure_logging(app: flask.Flask):
+    """
+    Initializes the logging of the provided app. The app should be already loaded with the necessary configuration
+    which should provide a 'LOGGING' property.
+
+    An example in YAML could be:
+
+        LOGGING:
+          version: 1
+
+          handlers:
+            console:
+              class: logging.StreamHandler
+              formatter: default
+              level: DEBUG
+
+          formatters:
+            default:
+              format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+              class: logging.Formatter
+
+          disable_existing_loggers: false
+
+          root:
+            level: DEBUG
+            handlers: [console]
+
+          loggers:
+            requests:
+              level: INFO
+
+            openapi_spec_validator:
+              level: INFO
+
+            connexion:
+              level: INFO
+
+    :param app:
+    """
     logging.config.dictConfig(app.config['LOGGING'])
