@@ -30,8 +30,8 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from backend.db import db_save
-from subscription_manager.db import db, Subscription
+from backend.db import db_save, db
+from subscription_manager.db import Subscription
 from subscription_manager.db.utils import generate_queue
 
 __author__ = "EUROCONTROL (SWIM)"

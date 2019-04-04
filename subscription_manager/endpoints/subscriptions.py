@@ -31,6 +31,7 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
+from auth.auth import admin_required
 from backend.errors import ConflictError, NotFoundError, BadRequestError
 from subscription_manager.db import subscriptions as db
 from subscription_manager.endpoints.schemas import SubscriptionSchema
@@ -39,11 +40,13 @@ from backend.marshal import unmarshal, marshal_with
 __author__ = "EUROCONTROL (SWIM)"
 
 
+@admin_required
 @marshal_with(SubscriptionSchema, many=True)
 def get_subscriptions():
     return db.get_subscriptions()
 
 
+@admin_required
 @marshal_with(SubscriptionSchema)
 def get_subscription(subscription_id):
     result = db.get_subscription_by_id(subscription_id)

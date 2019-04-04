@@ -30,9 +30,9 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import pytest
 
 from backend.db import db_save
-from auth_server.db import User
-from auth_server.db.users import get_user_by_id, get_users, save_user, get_user_by_username
-from tests.auth_server.utils import make_user
+from auth.db import User
+from auth.db.users import get_user_by_id, get_users, save_user, get_user_by_username
+from tests.auth.utils import make_user
 
 __author__ = "EUROCONTROL (SWIM)"
 

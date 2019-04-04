@@ -27,10 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from flask_sqlalchemy import SQLAlchemy
 
 __author__ = "EUROCONTROL (SWIM)"
-
-db = SQLAlchemy()
 
 from subscription_manager.db.models import Topic, Subscription

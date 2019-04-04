@@ -28,15 +28,4 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 
-from auth_server.db import db, Token
-from backend.db import db_save
-
 __author__ = "EUROCONTROL (SWIM)"
-
-
-def get_tokens():
-    return Token.query.all()
-
-
-def create_token(token):
-    return db_save(db.session, token)

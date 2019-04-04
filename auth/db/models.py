@@ -27,24 +27,27 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from datetime import datetime
-from uuid import uuid4
+from datetime import datetime, timezone
 
-from auth_server.db import User, Token
-from auth_server.core.auth import hash_password
+from backend.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def make_user():
-    return User(
-        username=f'test_user_{uuid4().hex}',
-        password=hash_password('password')
-    )
+def created_at_default(context):
+    params = context.get_current_parameters()
+    if not params['created_at']:
+        return datetime.now(timezone.utc)
 
 
-def make_token():
-    return Token(
-        access_token=uuid4().hex,
-        expires_at=datetime.now()
-    )
+class User(db.Model):
+
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    password = db.Column(db.String(256), nullable=False)
+    created_at = db.Column(db.DateTime(), nullable=False, default=created_at_default)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)

@@ -31,11 +31,11 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from auth_server.core.auth import hash_password
-from backend.db import property_has_changed
+from auth.auth import hash_password, admin_required
+from backend.db import property_has_changed, db
 from backend.errors import NotFoundError, ConflictError, BadRequestError
-from auth_server.db import users as user_service, db
-from auth_server.endpoints.schemas import UserSchema
+from auth.db import users as user_service
+from auth.endpoints.schemas import UserSchema
 from backend.marshal import marshal_with, unmarshal
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -46,6 +46,7 @@ def get_users():
     return user_service.get_users()
 
 
+
 @marshal_with(UserSchema)
 def get_user(user_id):
     result = user_service.get_user_by_id(user_id)
@@ -54,6 +55,7 @@ def get_user(user_id):
         raise NotFoundError(f"User with id {user_id} does not exist")
 
     return result
+
 
 
 @marshal_with(UserSchema)
@@ -74,6 +76,7 @@ def post_user():
     return user_created, 201
 
 
+
 @marshal_with(UserSchema)
 def put_user(user_id):
     user = user_service.get_user_by_id(user_id)
@@ -87,7 +90,7 @@ def put_user(user_id):
         raise BadRequestError(str(e))
 
     # in case the user has provided a new password then it needs to be hashed
-    if property_has_changed(db, user, 'password'):
+    if _password_has_changed(user):
         user.password = hash_password(user.password)
 
     try:
@@ -96,3 +99,7 @@ def put_user(user_id):
         raise ConflictError("Error while saving user in DB")
 
     return user_updated
+
+
+def _password_has_changed(user):
+    return property_has_changed(user, 'password')

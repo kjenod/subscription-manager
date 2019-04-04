@@ -27,29 +27,39 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from marshmallow_sqlalchemy import ModelSchema, ModelSchemaOpts
+from functools import wraps
 
-from auth_server.db import db, User
+from flask import request
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from auth.db.users import get_user_by_username
+from backend.errors import UnauthorizedError, ForbiddenError
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class BaseOpts(ModelSchemaOpts):
-    def __init__(self, meta):
-        if not hasattr(meta, 'sql_session'):
-                meta.sqla_session = db.session
-        if not hasattr(meta, 'include_fk'):
-            meta.include_fk = True
-        super(BaseOpts, self).__init__(meta)
+HASH_METHOD = 'pbkdf2:sha256'
 
 
-class BaseSchema(ModelSchema):
-    OPTIONS_CLASS = BaseOpts
+def validate_credentials(username, password):
+    user = get_user_by_username(username)
+
+    if not user or not check_password_hash(user.password, password):
+        raise ValueError('Invalid credentials')
+
+    return user
 
 
-class UserSchema(BaseSchema):
+def hash_password(password):
+    return generate_password_hash(password, method=HASH_METHOD)
 
-    class Meta:
-        model = User
-        load_only = ("password",)
-        dump_only = ("id",)
+
+def admin_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if request.user and hasattr(request.user, 'is_admin') and not request.user.is_admin:
+            raise ForbiddenError('Admin rights required')
+
+        return f(*args, **kwargs)
+
+    return wrapped

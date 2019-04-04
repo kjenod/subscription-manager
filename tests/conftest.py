@@ -27,35 +27,84 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from base64 import b64encode
 
-from auth_server.db import User, db
-from backend.db import db_save
+import pytest
+from pkg_resources import resource_filename
 
-__author__ = "EUROCONTROL (SWIM)"
+from auth.auth import hash_password
+from subscription_manager.app import create_app
+from backend.db import db as _db, db_save
+from tests.auth.utils import make_user
 
 
-def get_user_by_id(user_id):
-    try:
-        result = User.query.get(user_id)
-    except (NoResultFound, MultipleResultsFound):
-        result = None
+@pytest.yield_fixture(scope='session')
+def app():
+    config_file = resource_filename(__name__, 'test_config.yml')
+    _app = create_app(config_file)
+    ctx = _app.app_context()
+    ctx.push()
+
+    yield _app
+
+    ctx.pop()
+
+
+@pytest.fixture(scope='session')
+def test_client(app):
+    return app.test_client()
+
+
+@pytest.yield_fixture(scope='session')
+def db(app):
+    _db.app = app
+    _db.create_all()
+
+    yield _db
+
+    _db.drop_all()
+
+
+@pytest.fixture(scope='function', autouse=True)
+def session(db):
+    connection = db.engine.connect()
+    transaction = connection.begin()
+
+    options = dict(bind=connection, binds={})
+    session_ = db.create_scoped_session(options=options)
+
+    db.session = session_
+
+    yield session_
+
+    transaction.rollback()
+    connection.close()
+    session_.remove()
+
+
+@pytest.fixture(scope='function')
+def make_basic_auth_header(session):
+    """
+
+    :param session:
+    :return:
+    """
+    def helper(password='password', is_admin=False, authorized=True):
+        test_user = make_user(password=password, is_admin=is_admin)
+
+        if authorized:
+            db_save(session, test_user)
+
+        result = _make_basic_auth_header(test_user.username, password)
+
+        return result
+
+    return helper
+
+
+def _make_basic_auth_header(username, password):
+    basic_auth_str = b64encode(bytes(f'{username}:{password}', 'utf-8'))
+
+    result = {'Authorization': f"Basic {basic_auth_str.decode('utf-8')}"}
 
     return result
-
-
-def get_user_by_username(username):
-    try:
-        result = User.query.filter_by(username=username).one()
-    except (NoResultFound, MultipleResultsFound):
-        result = None
-
-    return result
-
-
-def get_users():
-    return User.query.all()
-
-
-def save_user(user):
-    return db_save(db.session, user)

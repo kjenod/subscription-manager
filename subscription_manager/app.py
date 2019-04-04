@@ -35,7 +35,7 @@ from pkg_resources import resource_filename
 
 from backend.flask import configure_flask
 from backend.config import configure_logging, load_app_config
-from subscription_manager.db import db
+from backend.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
 

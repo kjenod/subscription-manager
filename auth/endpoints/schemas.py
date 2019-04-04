@@ -27,9 +27,30 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from marshmallow_sqlalchemy import ModelSchema, ModelSchemaOpts
+
+from auth.db import User
+from backend.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
 
-VERSION = "1.0"
-DESCRIPTION = "Auth Server API"
-BASE_PATH = f"/auth-server/api/{VERSION}"
+
+class BaseOpts(ModelSchemaOpts):
+    def __init__(self, meta):
+        if not hasattr(meta, 'sql_session'):
+                meta.sqla_session = db.session
+        if not hasattr(meta, 'include_fk'):
+            meta.include_fk = True
+        super(BaseOpts, self).__init__(meta)
+
+
+class BaseSchema(ModelSchema):
+    OPTIONS_CLASS = BaseOpts
+
+
+class UserSchema(BaseSchema):
+
+    class Meta:
+        model = User
+        load_only = ("password",)
+        dump_only = ("id",)

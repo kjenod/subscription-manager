@@ -32,7 +32,7 @@ from marshmallow import post_dump, ValidationError
 from marshmallow.fields import Nested, Integer
 from marshmallow_sqlalchemy import ModelSchemaOpts, ModelSchema
 
-from subscription_manager.db import db
+from backend.db import db
 from subscription_manager.db.models import Topic, Subscription
 from subscription_manager.db.topics import get_topic_by_id
 

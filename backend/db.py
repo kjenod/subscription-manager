@@ -27,9 +27,12 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 
 __author__ = "EUROCONTROL (SWIM)"
+
+db = SQLAlchemy()
 
 
 def db_save(session, obj):
@@ -42,7 +45,7 @@ def db_save(session, obj):
         raise
 
 
-def property_has_changed(db, obj, property):
+def property_has_changed(obj, property, db=db):
     state = db.inspect(obj)
     history = state.get_history(property, True)
 

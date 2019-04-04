@@ -31,6 +31,7 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
+from auth.auth import admin_required
 from backend.errors import NotFoundError, ConflictError, BadRequestError
 from subscription_manager.db import topics as db
 from subscription_manager.endpoints.schemas import TopicSchema
@@ -39,11 +40,13 @@ from backend.marshal import unmarshal, marshal_with
 __author__ = "EUROCONTROL (SWIM)"
 
 
+@admin_required
 @marshal_with(TopicSchema, many=True)
 def get_topics():
     return db.get_topics()
 
 
+@admin_required
 @marshal_with(TopicSchema)
 def get_topic(topic_id):
     result = db.get_topic_by_id(topic_id)
@@ -54,6 +57,7 @@ def get_topic(topic_id):
     return result
 
 
+@admin_required
 @marshal_with(TopicSchema)
 def post_topic():
     try:
@@ -69,6 +73,7 @@ def post_topic():
     return topic_created, 201
 
 
+@admin_required
 @marshal_with(TopicSchema)
 def put_topic(topic_id):
     topic = db.get_topic_by_id(topic_id)

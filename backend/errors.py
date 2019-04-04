@@ -95,7 +95,7 @@ def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str,
         title = 'Internal Server Error'
         detail = 'The server has encountered an error during the request' + str(error)
 
-        _logger.error(detail, exc_info=True)
+    _logger.error(detail, exc_info=True)
 
     body = {
         "status": status,

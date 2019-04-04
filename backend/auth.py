@@ -27,10 +27,20 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from flask_sqlalchemy import SQLAlchemy
+from flask import request
+
+from auth.auth import validate_credentials
+from backend.errors import UnauthorizedError
 
 __author__ = "EUROCONTROL (SWIM)"
 
-db = SQLAlchemy()
 
-from auth_server.db.models import Token, User
+def basic_auth(username, password, required_scopes=None):
+    try:
+        user = validate_credentials(username, password)
+    except ValueError as e:
+        raise UnauthorizedError(str(e))
+
+    request.user = user
+
+    return {}

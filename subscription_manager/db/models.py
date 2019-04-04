@@ -29,7 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import enum
 
-from subscription_manager.db import db
+from backend.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
 

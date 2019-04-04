@@ -40,11 +40,15 @@ info:
 #  license:
 #    name: Apache 2.0
 #    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+security:
+  - basicAuth: []
 tags:
   - name: topics
     description: Operations related to topics a service can subscribe to
   - name: subscriptions
     description: Operations related to (un)subscribing to a topic
+  - name: users
+    description: Operations related users' creation and retrieval
 paths:
   /topics/:
     get:
@@ -272,7 +276,126 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /users/:
+    get:
+      tags:
+        - users
+      summary: retrieves all available users
+      operationId: auth.endpoints.users.get_users
+      responses:
+        '200':
+          description: lists all available users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - users
+      summary: creates a new user
+      operationId: auth.endpoints.users.post_user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPost'
+        description: user data to add
+      responses:
+        '201':
+          description: user created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: 'invalid input, object invalid'
+        '409':
+          description: an existing item already exists or a general DB conflict
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{user_id}:
+    get:
+      tags:
+        - users
+      summary: retrieves a user by its id
+      operationId: auth.endpoints.users.get_user
+      parameters:
+        - in: path
+          name: user_id
+          description: the id of the requested user
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: the requested user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description:  user does not exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - users
+      summary: updates an existing user
+      operationId: auth.endpoints.users.put_user
+      parameters:
+        - in: path
+          name: user_id
+          description: the id of the user to be updated
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPut'
+      responses:
+        '200':
+          description: the requested user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description:  user does not exist
+        '400':
+          description: 'invalid input, object invalid'
+        '409':
+          description: an existing item already exists or a general DB conflict
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      x-basicInfoFunc: backend.auth.basic_auth
+
   schemas:
     TopicName:
       description: the name of the topic
@@ -362,6 +485,37 @@ components:
         durable:
           type: boolean
           example: true
+    UserPost:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    UserPut:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: 'date-time'
+        is_admin:
+          type: boolean
     Error:
       description: Error structure (RFC 7807 compliant - https://tools.ietf.org/html/rfc7807)
       type: object

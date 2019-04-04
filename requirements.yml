@@ -12,3 +12,4 @@ dependencies:
   - marshmallow
   - marshmallow-sqlalchemy
   - psycopg2-binary
+  - PyJWT

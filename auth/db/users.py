@@ -27,48 +27,45 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from pathlib import Path
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from werkzeug.security import check_password_hash
 
-import connexion
-from swagger_ui_bundle import swagger_ui_3_path
-from pkg_resources import resource_filename
-
-from backend.flask import configure_flask
-from backend.config import configure_logging, load_app_config
-from auth_server.db import db
+from auth.db import User
+from backend.db import db_save, db
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def create_app(config_file):
-    options = {'swagger_path': swagger_ui_3_path}
-    connexion_app = connexion.App(__name__, options=options)
+def get_user_by_id(user_id):
+    try:
+        result = User.query.get(user_id)
+    except (NoResultFound, MultipleResultsFound):
+        result = None
 
-    connexion_app.add_api(Path('openapi.yml'), strict_validation=True)
-
-    app = connexion_app.app
-
-    app_config = load_app_config(package=__name__, filename=config_file)
-
-    app.config.update(app_config)
-
-    configure_flask(app)
-
-    configure_logging(app)
-
-    _configure_db(db, app)
-
-    return app
+    return result
 
 
-def _configure_db(db, app):
+def get_user_by_username(username):
+    try:
+        result = User.query.filter_by(username=username).one()
+    except (NoResultFound, MultipleResultsFound):
+        result = None
 
-    with app.app_context():
-        db.init_app(app)
-        db.create_all()
+    return result
 
 
-if __name__ == '__main__':
-    config_file = resource_filename(__name__, 'dev_config.yml')
-    app = create_app(config_file)
-    app.run(port=8081, debug=False)
+def get_users():
+    return User.query.all()
+
+
+def save_user(user):
+    return db_save(db.session, user)
+
+
+def validate_user_credentials(username, password):
+    user = get_user_by_username(username)
+
+    if user is None or check_password_hash(user.password, password) is False:
+        raise ValueError('Wrong credentials')
+
+    return user

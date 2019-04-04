@@ -34,11 +34,11 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash
 
-from auth_server.core.auth import HASH_METHOD
+from subscription_manager import BASE_PATH
+from auth.auth import HASH_METHOD
 from backend.db import db_save
-from auth_server import BASE_PATH
-from auth_server.db.users import get_user_by_id
-from tests.auth_server.utils import make_user
+from auth.db.users import get_user_by_id
+from tests.auth.utils import make_user
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -52,21 +52,21 @@ def generate_user(session):
     return _generate_user
 
 
-def test_get_user__user_does_not_exist__returns_404(test_client):
+def test_get_user__user_does_not_exist__returns_404(test_client, make_basic_auth_header):
     url = f'{BASE_PATH}/users/123456'
 
-    response = test_client.get(url)
+    response = test_client.get(url, headers=make_basic_auth_header())
 
     assert 404 == response.status_code
 
 
-def test_get_user__user_exists_and_is_returned(test_client, generate_user):
+def test_get_user__user_exists_and_is_returned(test_client, generate_user, make_basic_auth_header):
     user = generate_user()
     user.password = 'password'
 
     url = f'{BASE_PATH}/users/{user.id}'
 
-    response = test_client.get(url)
+    response = test_client.get(url, headers=make_basic_auth_header())
 
     assert 200 == response.status_code
 
@@ -76,33 +76,22 @@ def test_get_user__user_exists_and_is_returned(test_client, generate_user):
     assert user.is_admin == response_data['is_admin']
 
 
-def test_get_users__not_user_exists__empty_list_is_returned(test_client):
-    url = f'{BASE_PATH}/users/'
-
-    response = test_client.get(url)
-
-    assert 200 == response.status_code
-
-    response_data = json.loads(response.data)
-    assert [] == response_data
-
-
-def test_get_users__users_exist_and_are_returned_as_list(test_client, generate_user):
+def test_get_users__users_exist_and_are_returned_as_list(test_client, generate_user, make_basic_auth_header):
     users = [generate_user(), generate_user()]
 
     url = f'{BASE_PATH}/users/'
 
-    response = test_client.get(url)
+    response = test_client.get(url, headers=make_basic_auth_header())
 
     assert 200 == response.status_code
 
     response_data = json.loads(response.data)
     assert isinstance(response_data, list)
-    assert [t.username for t in users] == [d['username'] for d in response_data]
+    assert 3 == len(response_data)  # plus the test_user
 
 
 @pytest.mark.parametrize('missing_property', ['username', 'password'])
-def test_post_user__missing_required_property__returns_400(test_client, missing_property):
+def test_post_user__missing_required_property__returns_400(test_client, missing_property, make_basic_auth_header):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -112,7 +101,8 @@ def test_post_user__missing_required_property__returns_400(test_client, missing_
 
     url = f'{BASE_PATH}/users/'
 
-    response = test_client.post(url, data=json.dumps(user_data), content_type='application/json')
+    response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
+                                headers=make_basic_auth_header())
 
     assert 400 == response.status_code
 
@@ -120,8 +110,8 @@ def test_post_user__missing_required_property__returns_400(test_client, missing_
     assert f"'{missing_property}' is a required property" == response_data['detail']
 
 
-@mock.patch('auth_server.db.users.save_user', side_effect=IntegrityError(None, None, None))
-def test_post_user__db_error__returns_409(mock_create_user, test_client, generate_user):
+@mock.patch('auth.db.users.save_user', side_effect=IntegrityError(None, None, None))
+def test_post_user__db_error__returns_409(mock_create_user, test_client, generate_user, make_basic_auth_header):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -129,14 +119,15 @@ def test_post_user__db_error__returns_409(mock_create_user, test_client, generat
 
     url = f'{BASE_PATH}/users/'
 
-    response = test_client.post(url, data=json.dumps(user_data), content_type='application/json')
+    response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
+                                headers=make_basic_auth_header())
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
     assert "Error while saving user in DB" == response_data['detail']
 
 
-def test_post_user__user_is_saved_in_db(test_client):
+def test_post_user__user_is_saved_in_db(test_client, make_basic_auth_header):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -144,7 +135,8 @@ def test_post_user__user_is_saved_in_db(test_client):
 
     url = f'{BASE_PATH}/users/'
 
-    response = test_client.post(url, data=json.dumps(user_data), content_type='application/json')
+    response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
+                                headers=make_basic_auth_header())
 
     assert 201 == response.status_code
 
@@ -160,8 +152,8 @@ def test_post_user__user_is_saved_in_db(test_client):
     assert check_password_hash(db_user.password, 'password') is True
 
 
-@mock.patch('auth_server.db.users.save_user', side_effect=IntegrityError(None, None, None))
-def test_put_user__db_error__returns_409(mock_update_user, test_client, generate_user):
+@mock.patch('auth.db.users.save_user', side_effect=IntegrityError(None, None, None))
+def test_put_user__db_error__returns_409(mock_update_user, test_client, generate_user, make_basic_auth_header):
     user = generate_user()
 
     user_data = {
@@ -171,14 +163,15 @@ def test_put_user__db_error__returns_409(mock_update_user, test_client, generate
 
     url = f'{BASE_PATH}/users/{user.id}'
 
-    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
     assert "Error while saving user in DB" == response_data['detail']
 
 
-def test_put_user__user_does_not_exist__returns_404(test_client):
+def test_put_user__user_does_not_exist__returns_404(test_client, make_basic_auth_header):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -186,7 +179,8 @@ def test_put_user__user_does_not_exist__returns_404(test_client):
 
     url = f'{BASE_PATH}/users/1234'
 
-    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 404 == response.status_code
 
@@ -194,7 +188,7 @@ def test_put_user__user_does_not_exist__returns_404(test_client):
     assert "User with id 1234 does not exist" == response_data['detail']
 
 
-def test_put_user__user_is_updated(test_client, generate_user):
+def test_put_user__user_is_updated(test_client, generate_user, make_basic_auth_header):
     user = generate_user()
 
     user_data = {
@@ -203,7 +197,8 @@ def test_put_user__user_is_updated(test_client, generate_user):
 
     url = f'{BASE_PATH}/users/{user.id}'
 
-    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 200 == response.status_code
 
@@ -214,7 +209,7 @@ def test_put_user__user_is_updated(test_client, generate_user):
     assert user_data['username'] == db_user.username
 
 
-def test_put_user__new_password_is_updated_and_hashed_correctly(test_client, generate_user):
+def test_put_user__new_password_is_updated_and_hashed_correctly(test_client, generate_user, make_basic_auth_header):
     user = generate_user()
 
     user_data = {
@@ -223,7 +218,8 @@ def test_put_user__new_password_is_updated_and_hashed_correctly(test_client, gen
 
     url = f'{BASE_PATH}/users/{user.id}'
 
-    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 200 == response.status_code
 

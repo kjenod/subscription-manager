@@ -27,53 +27,17 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import pytest
-from pkg_resources import resource_filename
+from uuid import uuid4
 
-from subscription_manager.app import create_app
-from subscription_manager.db import db as _db
+from auth.db import User
+from auth.auth import hash_password
 
-
-@pytest.yield_fixture(scope='session')
-def app():
-
-    config_file = resource_filename(__name__, 'test_config.yml')
-    _app = create_app(config_file)
-    ctx = _app.app_context()
-    ctx.push()
-
-    yield _app
-
-    ctx.pop()
+__author__ = "EUROCONTROL (SWIM)"
 
 
-@pytest.fixture(scope='session')
-def test_client(app):
-    return app.test_client()
-
-
-@pytest.yield_fixture(scope='session')
-def db(app):
-    _db.app = app
-    _db.create_all()
-
-    yield _db
-
-    _db.drop_all()
-
-
-@pytest.fixture(scope='function', autouse=True)
-def session(db):
-    connection = db.engine.connect()
-    transaction = connection.begin()
-
-    options = dict(bind=connection, binds={})
-    session_ = db.create_scoped_session(options=options)
-
-    db.session = session_
-
-    yield session_
-
-    transaction.rollback()
-    connection.close()
-    session_.remove()
+def make_user(username='username', password='password', is_admin=False):
+    return User(
+        username=f'{username}_{uuid4().hex}',
+        password=hash_password(password),
+        is_admin=is_admin
+    )

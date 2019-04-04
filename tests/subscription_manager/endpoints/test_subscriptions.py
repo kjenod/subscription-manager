@@ -60,20 +60,47 @@ def generate_subscription(session):
     return _generate_subscription
 
 
-def test_get_subscription__subscription_does_not_exist__returns_404(test_client):
+def test_get_subscription__subscription_does_not_exist__returns_404(test_client, make_basic_auth_header):
     url = f'{BASE_PATH}/subscriptions/123456'
 
-    response = test_client.get(url)
+    response = test_client.get(url, headers=make_basic_auth_header(is_admin=True))
 
     assert 404 == response.status_code
 
 
-def test_get_subscription__subscription_exists_and_its_data_is_returned(test_client, generate_subscription):
+def test_get_subscription__authorized_user__returns_401(test_client, generate_subscription, make_basic_auth_header):
     subscription = generate_subscription()
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
-    response = test_client.get(url)
+    response = test_client.get(url, headers=make_basic_auth_header(authorized=False))
+
+    assert 401 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert 'Invalid credentials' == response_data['detail']
+
+
+def test_get_subscription__non_admin_user__returns_403(test_client, generate_subscription, make_basic_auth_header):
+    subscription = generate_subscription()
+
+    url = f'{BASE_PATH}/subscriptions/{subscription.id}'
+
+    response = test_client.get(url, headers=make_basic_auth_header(is_admin=False))
+
+    assert 403 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert 'Admin rights required' == response_data['detail']
+
+
+def test_get_subscription__subscription_exists_and_its_data_is_returned(test_client, generate_subscription,
+                                                                        make_basic_auth_header):
+    subscription = generate_subscription()
+
+    url = f'{BASE_PATH}/subscriptions/{subscription.id}'
+
+    response = test_client.get(url, headers=make_basic_auth_header(is_admin=True))
 
     assert 200 == response.status_code
 
@@ -86,10 +113,10 @@ def test_get_subscription__subscription_exists_and_its_data_is_returned(test_cli
     assert subscription.id == response_data['id']
 
 
-def test_get_subscriptions__not_subscription_exists__empty_list_is_returned(test_client):
+def test_get_subscriptions__not_subscription_exists__empty_list_is_returned(test_client, make_basic_auth_header):
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.get(url)
+    response = test_client.get(url, headers=make_basic_auth_header(is_admin=True))
 
     assert 200 == response.status_code
 
@@ -97,12 +124,39 @@ def test_get_subscriptions__not_subscription_exists__empty_list_is_returned(test
     assert [] == response_data
 
 
-def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_client, generate_subscription):
+def test_get_subscriptions__unauthorized_user__returns_401(test_client, generate_subscription, make_basic_auth_header):
     subscriptions = [generate_subscription(), generate_subscription()]
 
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.get(url)
+    response = test_client.get(url, headers=make_basic_auth_header(authorized=False))
+
+    assert 401 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert 'Invalid credentials' == response_data['detail']
+
+
+def test_get_subscriptions__non_admin_user__returns_401(test_client, generate_subscription, make_basic_auth_header):
+    subscriptions = [generate_subscription(), generate_subscription()]
+
+    url = f'{BASE_PATH}/subscriptions/'
+
+    response = test_client.get(url, headers=make_basic_auth_header(is_admin=False))
+
+    assert 403 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert 'Admin rights required' == response_data['detail']
+
+
+def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_client, generate_subscription,
+                                                                         make_basic_auth_header):
+    subscriptions = [generate_subscription(), generate_subscription()]
+
+    url = f'{BASE_PATH}/subscriptions/'
+
+    response = test_client.get(url, headers=make_basic_auth_header(is_admin=True))
 
     assert 200 == response.status_code
 
@@ -116,7 +170,7 @@ def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_cl
     assert [t.qos.value for t in subscriptions] == [d['qos'] for d in response_data]
 
 
-def test_post_subscription__missing_topic_id__returns_400(test_client):
+def test_post_subscription__missing_topic_id__returns_400(test_client, make_basic_auth_header):
     subscription_data = {
         'active': True,
         'qos': QOS.EXACTLY_ONCE.value,
@@ -125,7 +179,8 @@ def test_post_subscription__missing_topic_id__returns_400(test_client):
 
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
+                                headers=make_basic_auth_header())
 
     assert 400 == response.status_code
 
@@ -133,7 +188,7 @@ def test_post_subscription__missing_topic_id__returns_400(test_client):
     assert "'topic_id' is a required property" == response_data['detail']
 
 
-def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic):
+def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic, make_basic_auth_header):
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -145,7 +200,8 @@ def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic
 
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
+                                headers=make_basic_auth_header())
 
     assert 400 == response.status_code
 
@@ -153,14 +209,15 @@ def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic
     assert f"'invalid' is not one of {QOS.all()}" == response_data['detail']
 
 
-def test_post_subscription__invalid_topic_id__returns_400(test_client):
+def test_post_subscription__invalid_topic_id__returns_400(test_client, make_basic_auth_header):
     subscription_data = {
         'topic_id': 1234,
     }
 
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
+                                headers=make_basic_auth_header())
 
     assert 400 == response.status_code
 
@@ -169,7 +226,8 @@ def test_post_subscription__invalid_topic_id__returns_400(test_client):
 
 
 @mock.patch('subscription_manager.db.subscriptions.create_subscription', side_effect=IntegrityError(None, None, None))
-def test_post_subscription__db_error__returns_409(mock_create_subscription, test_client, generate_topic):
+def test_post_subscription__db_error__returns_409(mock_create_subscription, test_client, generate_topic,
+                                                  make_basic_auth_header):
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -181,14 +239,15 @@ def test_post_subscription__db_error__returns_409(mock_create_subscription, test
 
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
+                                headers=make_basic_auth_header())
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
     assert "Error while saving subscription in DB" == response_data['detail']
 
 
-def test_post_subscription__subscription_is_saved_in_db(test_client, generate_topic):
+def test_post_subscription__subscription_is_saved_in_db(test_client, generate_topic, make_basic_auth_header):
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -200,7 +259,8 @@ def test_post_subscription__subscription_is_saved_in_db(test_client, generate_to
 
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
+                                headers=make_basic_auth_header())
 
     assert 201 == response.status_code
 
@@ -223,13 +283,14 @@ def test_post_subscription__subscription_is_saved_in_db(test_client, generate_to
     assert subscription_data['topic_id'] == db_subscription.topic.id
 
 
-def test_put_subscription__subscription_does_not_exist__returns_404(test_client):
+def test_put_subscription__subscription_does_not_exist__returns_404(test_client, make_basic_auth_header):
 
     subscription_data = {'active': False}
 
     url = f'{BASE_PATH}/subscriptions/1234'
 
-    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 404 == response.status_code
 
@@ -237,7 +298,7 @@ def test_put_subscription__subscription_does_not_exist__returns_404(test_client)
     assert "Subscription with id 1234 does not exist" == response_data['detail']
 
 
-def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscription):
+def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscription, make_basic_auth_header):
     subscription = generate_subscription()
 
     subscription_data = {
@@ -249,7 +310,8 @@ def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscr
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
-    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 400 == response.status_code
 
@@ -257,7 +319,7 @@ def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscr
     assert f"'invalid' is not one of {QOS.all()}" == response_data['detail']
 
 
-def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_subscription):
+def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_subscription, make_basic_auth_header):
     subscription = generate_subscription()
 
     subscription_data = {
@@ -266,7 +328,8 @@ def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_s
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
-    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 400 == response.status_code
 
@@ -275,28 +338,31 @@ def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_s
 
 
 @mock.patch('subscription_manager.db.subscriptions.update_subscription', side_effect=IntegrityError(None, None, None))
-def test_put_subscription__db_error__returns_409(mock_update_subscription, test_client, generate_subscription):
+def test_put_subscription__db_error__returns_409(mock_update_subscription, test_client, generate_subscription,
+                                                 make_basic_auth_header):
     subscription = generate_subscription()
 
     subscription_data = {'active': not(subscription.active)}
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
-    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
     assert "Error while saving subscription in DB" == response_data['detail']
 
 
-def test_put_subscription__subscription_is_updated(test_client, generate_subscription):
+def test_put_subscription__subscription_is_updated(test_client, generate_subscription, make_basic_auth_header):
     subscription = generate_subscription()
 
     subscription_data = {'active': not(subscription.active)}
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
-    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json')
+    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
+                               headers=make_basic_auth_header())
 
     assert 200 == response.status_code
 
