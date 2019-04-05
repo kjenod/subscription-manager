@@ -36,7 +36,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.auth import admin_required
 from backend.errors import ConflictError, NotFoundError, BadRequestError
 from backend.typing import JSONType
-from subscription_manager.db import subscriptions as db
+from subscription_manager.db import subscriptions as db, Subscription
 from subscription_manager.endpoints.schemas import SubscriptionSchema
 from backend.marshal import unmarshal, marshal_with
 
@@ -45,7 +45,7 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @admin_required
 @marshal_with(SubscriptionSchema, many=True)
-def get_subscriptions() -> JSONType:
+def get_subscriptions() -> t.List[Subscription]:
     """
     GET /subscriptions/
 
@@ -58,7 +58,7 @@ def get_subscriptions() -> JSONType:
 
 @admin_required
 @marshal_with(SubscriptionSchema)
-def get_subscription(subscription_id: int) -> JSONType:
+def get_subscription(subscription_id: int) -> Subscription:
     """
     GET /subscription/{subscription_id}
 
@@ -77,7 +77,7 @@ def get_subscription(subscription_id: int) -> JSONType:
 
 
 @marshal_with(SubscriptionSchema)
-def post_subscription() -> t.Tuple[JSONType, int]:
+def post_subscription() -> t.Tuple[Subscription, int]:
     """
     POST /subscriptions/
 

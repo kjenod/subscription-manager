@@ -50,12 +50,12 @@ def get_subscriptions() -> t.List[Subscription]:
     return Subscription.query.all()
 
 
-def create_subscription(subscription: Subscription) -> t.Type[Subscription]:
+def create_subscription(subscription: Subscription) -> Subscription:
     if subscription.queue is None:
         subscription.queue = generate_queue()
 
     return db_save(db.session, subscription)
 
 
-def update_subscription(subscription: Subscription) -> object:
+def update_subscription(subscription: Subscription) -> Subscription:
     return db_save(db.session, subscription)

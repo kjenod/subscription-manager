@@ -37,7 +37,7 @@ db = flask_sa.SQLAlchemy()
 
 
 def db_save(session: sa.orm.session.Session,
-            obj: flask_sa.model.Model) -> flask_sa.model.Model:
+            obj: flask_sa.model.DefaultMeta) -> flask_sa.model.DefaultMeta:
     """
     Saves an object in db and rollbacks before raising in case of DB error
 

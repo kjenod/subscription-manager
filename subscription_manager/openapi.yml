@@ -177,7 +177,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Topic'
+                  $ref: '#/components/schemas/Subscription'
         default:
           description: unexpected error
           content:

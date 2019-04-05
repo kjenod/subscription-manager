@@ -40,8 +40,8 @@ __author__ = "EUROCONTROL (SWIM)"
 
 def unmarshal(schema_class: marshmallow.Schema,
               data: t.Dict[str, t.Any],
-              instance: t.Optional[flask_sqlalchemy.model.Model] = None,
-              **kwargs: object) -> flask_sqlalchemy.model.Model:
+              instance: t.Optional[flask_sqlalchemy.model.DefaultMeta] = None,
+              **kwargs: object) -> flask_sqlalchemy.model.DefaultMeta:
     """
     Deserializes a dictionary into a Model.
 
