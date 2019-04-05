@@ -266,7 +266,7 @@ def test_put_topic__unauthorized_user__returns_401(test_client, generate_topic, 
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_put_topic__non_admin_user__returns_401(test_client, generate_topic, make_basic_auth_header):
+def test_put_topic__non_admin_user__returns_403(test_client, generate_topic, make_basic_auth_header):
     topic = generate_topic('test_topic')
 
     topic_data = {'name': 'test_topic'}

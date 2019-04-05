@@ -33,17 +33,19 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from auth.auth import hash_password
+from backend.auth import admin_required
 from backend.db import property_has_changed
 from backend.errors import NotFoundError, ConflictError, BadRequestError
-from auth.db import users as user_service, User
-from auth.endpoints.schemas import UserSchema
 from backend.marshal import marshal_with, unmarshal
 from backend.typing import JSONType
+from auth.auth import hash_password
+from auth.db import users as user_service, User
+from auth.endpoints.schemas import UserSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
+@admin_required
 @marshal_with(UserSchema, many=True)
 def get_users() -> JSONType:
     """
@@ -56,6 +58,7 @@ def get_users() -> JSONType:
     return user_service.get_users()
 
 
+@admin_required
 @marshal_with(UserSchema)
 def get_user(user_id: int) -> JSONType:
     """
@@ -74,6 +77,7 @@ def get_user(user_id: int) -> JSONType:
     return result
 
 
+@admin_required
 @marshal_with(UserSchema)
 def post_user() -> t.Tuple[JSONType, int]:
     """
@@ -100,6 +104,7 @@ def post_user() -> t.Tuple[JSONType, int]:
     return user_created, 201
 
 
+@admin_required
 @marshal_with(UserSchema)
 def put_user(user_id: int) -> JSONType:
     """
