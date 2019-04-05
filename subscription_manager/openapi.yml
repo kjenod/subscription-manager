@@ -405,6 +405,8 @@ components:
       description: Quality of Service value to be passed to the broker
       type: string
       enum: [
+        'AT_LEAST_ONCE',
+        'AT_MOST_ONCE',
         'EXACTLY_ONCE'
       ]
       example: 'EXACTLY_ONCE'

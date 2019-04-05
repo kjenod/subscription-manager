@@ -42,6 +42,8 @@ class Topic(db.Model):
 
 
 class QOS(enum.Enum):
+    AT_LEAST_ONCE = "AT_LEAST_ONCE"
+    AT_MOST_ONCE = "AT_MOST_ONCE"
     EXACTLY_ONCE = "EXACTLY_ONCE"
 
     @classmethod
