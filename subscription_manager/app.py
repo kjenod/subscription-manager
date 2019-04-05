@@ -40,8 +40,10 @@ from backend.db import db
 __author__ = "EUROCONTROL (SWIM)"
 
 
-# TODO: separate backend?
-# TODO: add admin_required in users endpoints?
+# TODO: separate backend
+# TODO: separate auth
+# TODO: fix typing hints
+
 
 def create_app(config_file):
     options = {'swagger_path': swagger_ui_3_path}
