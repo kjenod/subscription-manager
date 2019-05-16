@@ -30,18 +30,18 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import typing as t
 from functools import wraps
 
-import flask_sqlalchemy
 import marshmallow
 
+from backend.db import db
 from backend.typing import ViewResponse, JSONType
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def unmarshal(schema_class: marshmallow.Schema,
+def unmarshal(schema_class: t.Type[marshmallow.Schema],
               data: t.Dict[str, t.Any],
-              instance: t.Optional[flask_sqlalchemy.model.DefaultMeta] = None,
-              **kwargs: object) -> flask_sqlalchemy.model.DefaultMeta:
+              instance: t.Optional[db.Model] = None,
+              **kwargs: object) -> db.Model:
     """
     Deserializes a dictionary into a Model.
 

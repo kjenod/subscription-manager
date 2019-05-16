@@ -77,6 +77,11 @@ class ConflictError(APIError):
     status = HTTPStatus.CONFLICT.value
 
 
+class BadGatewayError(APIError):
+    title = HTTPStatus.BAD_GATEWAY.phrase
+    status = HTTPStatus.BAD_GATEWAY.value
+
+
 def process_error(error: t.Union[HTTPException, APIError, t.Any]) -> t.Dict[str, str]:
     """
     Depending on the incoming error it prepares a JSON serializable structure with all the necessary information of the

@@ -27,64 +27,74 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import typing as t
+from threading import Lock
 
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm.session import Session
-from sqlalchemy.exc import IntegrityError
-
+from werkzeug.local import LocalProxy
 
 __author__ = "EUROCONTROL (SWIM)"
 
-db = SQLAlchemy()
 
-
-def db_save(session: Session, obj: t.Optional[db.Model]) -> t.Optional[db.Model]:
-    """
-    Saves an object in db and rollbacks before raising in case of DB error
-
-    :param session:
-    :param obj:
-    :return:
-    """
+def import_flask():
     try:
-        session.add(obj)
-        session.commit()
-        return obj
-    except IntegrityError:
-        session.rollback()
-        raise
+        import flask
+        from flask import current_app
+        return flask, current_app
+    except ImportError:
+        return None, None
 
 
-def db_delete(session: Session, obj: t.Optional[db.Model]) -> t.Optional[db.Model]:
-    """
-    Saves an object in db and rollbacks before raising in case of DB error
-
-    :param session:
-    :param obj:
-    :return:
-    """
-    try:
-        session.delete(obj)
-        session.commit()
-        return obj
-    except IntegrityError:
-        session.rollback()
-        raise
+flask, flask_app = import_flask()
 
 
-def property_has_changed(obj: db.Model,
-                         property: str,
-                         db: SQLAlchemy = db) -> bool:
-    """
-    Indicates whether a property of an object has changed after it was loaded from DB.
+def _get_app_context():
+    if flask and flask_app:
+        return flask_app
 
-    :param obj:
-    :param property:
-    :param db:
-    :return:
-    """
-    state = db.inspect(obj)
-    history = state.get_history(property, True)
+    raise Exception("No flask app context found.")
 
-    return history.has_changes()
+
+app_context = LocalProxy(_get_app_context)
+
+
+class BaseProxy(LocalProxy):
+    _private = {"_lock", "_key", "_container", "_create_func"}
+
+    def __init__(self, container, key, create_func):
+        super().__init__(self.__get_object)
+
+        self._lock = Lock()
+        self._container = container
+        self._key = key
+        self._create_func = create_func
+
+    def __get_object(self):
+        result = getattr(self._container, self._key, None)
+
+        if result is None:
+            with self._lock:
+                result = getattr(self._container, self._key, None)
+                if result is None:
+                    result = self._create_func()
+                    setattr(self._container, self._key, result)
+
+        return result
+
+    def __setattr__(self, key, value):
+        if key in self._private:
+            object.__setattr__(self, key, value)
+        else:
+            return super().__setattr__(key, value)
+
+
+class AppContextProxy(BaseProxy):
+    def __init__(self, create_func):
+        super().__init__(app_context, f"_swim_{id(self)}", create_func)
+
+
+class _StaticContainer:
+    pass
+
+
+class LazyProxy(BaseProxy):
+    def __init__(self, create_func):
+        super().__init__(_StaticContainer(), "_object", create_func)
