@@ -28,22 +28,25 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import typing as t
+from copy import deepcopy
 
-from flask import request
+from flask import request, current_app
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import make_transient
 
 from backend.auth import admin_required
-from backend.errors import ConflictError, NotFoundError, BadRequestError
+from backend.errors import ConflictError, NotFoundError, BadRequestError, BadGatewayError
 from backend.typing import JSONType
+from subscription_manager.broker import broker
 from subscription_manager.db import subscriptions as db, Subscription
 from subscription_manager.endpoints.schemas import SubscriptionSchema
 from backend.marshal import unmarshal, marshal_with
+from subscription_manager.events import events
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-@admin_required
 @marshal_with(SubscriptionSchema, many=True)
 def get_subscriptions() -> t.List[Subscription]:
     """
@@ -56,7 +59,6 @@ def get_subscriptions() -> t.List[Subscription]:
     return db.get_subscriptions()
 
 
-@admin_required
 @marshal_with(SubscriptionSchema)
 def get_subscription(subscription_id: int) -> Subscription:
     """
@@ -84,19 +86,21 @@ def post_subscription() -> t.Tuple[Subscription, int]:
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
              backend.errors.ForbiddenError (HTTP error 403)
              backend.errors.BadRequestError (HTTP error 400)
+             backend.errors.BadGatewayError (HTTP error 502)
     """
 
     try:
         subscription = unmarshal(SubscriptionSchema, request.get_json())
+
+        events.create_subscription_event(subscription)
     except ValidationError as e:
         raise BadRequestError(str(e))
-
-    try:
-        subscription_created = db.create_subscription(subscription)
+    except broker.BrokerError as e:
+        raise BadGatewayError(f"Error while accessing the broker: {str(e)}")
     except IntegrityError as e:
         raise ConflictError(f"Error while saving subscription in DB")
 
-    return subscription_created, 201
+    return subscription, 201
 
 
 @marshal_with(SubscriptionSchema)
@@ -115,14 +119,38 @@ def put_subscription(subscription_id: int) -> JSONType:
     if subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
+    current_subscription = deepcopy(subscription)
     try:
-        subscription = unmarshal(SubscriptionSchema, request.get_json(), instance=subscription)
+        updated_subscription = unmarshal(SubscriptionSchema, request.get_json(), instance=subscription)
+
+        events.update_subscription_event(current_subscription, updated_subscription)
     except ValidationError as e:
         raise BadRequestError(str(e))
-
-    try:
-        subscription_updated = db.update_subscription(subscription)
+    except broker.BrokerError as e:
+        raise BadGatewayError(f"Error while accessing broker: {str(e)}")
     except IntegrityError:
         raise ConflictError("Error while saving subscription in DB")
 
-    return subscription_updated
+    return updated_subscription
+
+
+def delete_subscription(subscription_id: int) -> t.Tuple[None, int]:
+    """
+    DELETE /subscriptions/{subscription_id}
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+             backend.errors.NotFoundError (HTTP error 404)
+    """
+    subscription = db.get_subscription_by_id(subscription_id)
+
+    if subscription is None:
+        raise NotFoundError(f"Topic with id {subscription_id} does not exist")
+
+    try:
+        events.delete_subscription_event(subscription)
+    except broker.BrokerError as e:
+        raise BadGatewayError(f"Error while accessing broker: {str(e)}")
+    except IntegrityError:
+        raise ConflictError(f"Error while deleting subscription {subscription.id} from db")
+
+    return None, 204

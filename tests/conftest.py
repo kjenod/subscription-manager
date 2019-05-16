@@ -32,7 +32,6 @@ from base64 import b64encode
 import pytest
 from pkg_resources import resource_filename
 
-from auth.auth import hash_password
 from subscription_manager.app import create_app
 from backend.db import db as _db, db_save
 from tests.auth.utils import make_user

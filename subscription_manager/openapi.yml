@@ -128,41 +128,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    put:
+    delete:
       tags:
         - topics
-      summary: updates an existing topic
-      operationId: subscription_manager.endpoints.topics.put_topic
+      summary: deletes a topic by its id
+      operationId: subscription_manager.endpoints.topics.delete_topic
       parameters:
         - in: path
           name: topic_id
-          description: the id of the topic to be updated
+          description: the id of the requested topic
           schema:
             type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TopicPut'
       responses:
-        '200':
-          description: the requested topic
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Topic'
+        '204':
+          description: topic deleted successfully
         '404':
           description:  topic does not exist
-        '400':
-          description: 'invalid input, object invalid'
-        '409':
-          description: an existing item already exists or a general DB conflict
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+#    put:
+#      tags:
+#        - topics
+#      summary: updates an existing topic
+#      operationId: subscription_manager.endpoints.topics.put_topic
+#      parameters:
+#        - in: path
+#          name: topic_id
+#          description: the id of the topic to be updated
+#          schema:
+#            type: integer
+#      requestBody:
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/TopicPut'
+#      responses:
+#        '200':
+#          description: the requested topic
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/Topic'
+#        '404':
+#          description:  topic does not exist
+#        '400':
+#          description: 'invalid input, object invalid'
+#        '409':
+#          description: an existing item already exists or a general DB conflict
+#        default:
+#          description: unexpected error
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/Error'
+
   /subscriptions/:
     get:
       tags:
@@ -276,6 +299,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - subscriptions
+      summary: deletes a subscription by its id
+      operationId: subscription_manager.endpoints.subscriptions.delete_subscription
+      parameters:
+        - in: path
+          name: subscription_id
+          description: the id of the requested subscription
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: subscription deleted successfully
+        '404':
+          description:  subscription does not exist
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /users/:
     get:
       tags:

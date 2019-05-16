@@ -28,6 +28,8 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import typing as t
+from copy import deepcopy
+
 from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -38,31 +40,28 @@ from backend.typing import JSONType
 from subscription_manager.db import topics as db
 from subscription_manager.endpoints.schemas import TopicSchema
 from backend.marshal import unmarshal, marshal_with
+from subscription_manager.events import events
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-@admin_required
 @marshal_with(TopicSchema, many=True)
 def get_topics() -> JSONType:
     """
     GET /topics/
 
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
-             backend.errors.ForbiddenError (HTTP error 403)
     """
 
     return db.get_topics()
 
 
-@admin_required
 @marshal_with(TopicSchema)
 def get_topic(topic_id: int) -> JSONType:
     """
     GET /topic/{topic_id}
 
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
-             backend.errors.ForbiddenError (HTTP error 403)
              backend.errors.NotFoundError (HTTP error 404)
     """
 
@@ -74,55 +73,70 @@ def get_topic(topic_id: int) -> JSONType:
     return result
 
 
-@admin_required
 @marshal_with(TopicSchema)
 def post_topic() -> t.Tuple[JSONType, int]:
     """
     POST /topics/
 
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
-             backend.errors.ForbiddenError (HTTP error 403)
              backend.errors.BadRequestError (HTTP error 400)
     """
 
     try:
         topic = unmarshal(TopicSchema, request.get_json())
+
+        events.create_topic_event(topic)
     except ValidationError as e:
         raise BadRequestError(str(e))
-
-    try:
-        topic_created = db.create_topic(topic)
     except IntegrityError:
         raise ConflictError("Error while saving topic in DB")
 
-    return topic_created, 201
+    return topic, 201
 
 
-@admin_required
-@marshal_with(TopicSchema)
-def put_topic(topic_id: int) -> JSONType:
+# @marshal_with(TopicSchema)
+# def put_topic(topic_id: int) -> JSONType:
+#     """
+#     PUT /topics/{topic_id}
+#
+#     :raises: backend.errors.UnauthorizedError (HTTP error 401)
+#              backend.errors.NotFoundError (HTTP error 404)
+#              backend.errors.BadRequestError (HTTP error 400)
+#     """
+#
+#     topic = db.get_topic_by_id(topic_id)
+#
+#     if topic is None:
+#         raise NotFoundError(f"Topic with id {topic_id} does not exist")
+#
+#     current_topic = deepcopy(topic)
+#     try:
+#         updated_topic = unmarshal(TopicSchema, request.get_json(), instance=topic)
+#
+#         events.update_topic_event(current_topic, updated_topic)
+#     except ValidationError as e:
+#         raise BadRequestError(str(e))
+#     except IntegrityError:
+#         raise ConflictError("Error while saving topic in DB")
+#
+#     return updated_topic
+
+
+def delete_topic(topic_id: int) -> t.Tuple[None, int]:
     """
-    PUT /topics/{tpic_id}
+    DELETE /topics/{topic_id}
 
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
-             backend.errors.ForbiddenError (HTTP error 403)
              backend.errors.NotFoundError (HTTP error 404)
-             backend.errors.BadRequestError (HTTP error 400)
     """
-
     topic = db.get_topic_by_id(topic_id)
 
     if topic is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")
 
     try:
-        topic = unmarshal(TopicSchema, request.get_json(), instance=topic)
-    except ValidationError as e:
-        raise BadRequestError(str(e))
-
-    try:
-        topic_updated = db.update_topic(topic)
+        events.delete_topic_event(topic)
     except IntegrityError:
-        raise ConflictError("Error while saving topic in DB")
+        raise ConflictError(f"Error while deleting topic {topic.id} from db")
 
-    return topic_updated
+    return None, 204

@@ -35,8 +35,9 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.db import db_save
 from subscription_manager import BASE_PATH
+from subscription_manager.broker import broker
 from subscription_manager.db.topics import get_topic_by_id
-from tests.subscription_manager.utils import make_topic
+from tests.subscription_manager.utils import make_topic, make_subscription
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -48,6 +49,19 @@ def generate_topic(session):
         return db_save(session, topic)
 
     return _generate_topic
+
+
+@pytest.fixture
+def generate_subscription(session):
+    def _generate_subscription(topic=None, with_broker_queue=False):
+        subscription = make_subscription(topic=topic)
+        db_save(session, subscription)
+
+        if with_broker_queue:
+            broker.create_queue_for_topic(subscription.queue, subscription.topic.name)
+
+        return subscription
+    return _generate_subscription
 
 
 def test_get_topic__topic_does_not_exist__returns_404(test_client, make_basic_auth_header):
@@ -69,19 +83,6 @@ def test_get_topic__unauthorized_user__returns_401(test_client, generate_topic, 
 
     response_data = json.loads(response.data)
     assert 'Invalid credentials' == response_data['detail']
-
-
-def test_get_topic__non_admin_user__returns_403(test_client, generate_topic, make_basic_auth_header):
-    topic = generate_topic('test_topic')
-
-    url = f'{BASE_PATH}/topics/{topic.id}'
-
-    response = test_client.get(url, headers=make_basic_auth_header(is_admin=False))
-
-    assert 403 == response.status_code
-
-    response_data = json.loads(response.data)
-    assert 'Admin rights required' == response_data['detail']
 
 
 def test_get_topic__topic_exists_and_is_returned(test_client, generate_topic, make_basic_auth_header):
@@ -117,17 +118,6 @@ def test_get_topics__unauthorized_user__returns_401(test_client, make_basic_auth
 
     response_data = json.loads(response.data)
     assert 'Invalid credentials' == response_data['detail']
-
-
-def test_get_topics__non_admin_user__returns_403(test_client, make_basic_auth_header):
-    url = f'{BASE_PATH}/topics/'
-
-    response = test_client.get(url, headers=make_basic_auth_header(is_admin=False))
-
-    assert 403 == response.status_code
-
-    response_data = json.loads(response.data)
-    assert 'Admin rights required' == response_data['detail']
 
 
 def test_get_topics__topics_exist_and_are_returned_as_list(test_client, generate_topic, make_basic_auth_header):
@@ -186,20 +176,6 @@ def test_post_topic__unauthorized_user__returns_401(test_client, make_basic_auth
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_post_topic__non_admin_user__returns_403(test_client, make_basic_auth_header):
-    topic_data = {'name': 'test_topic'}
-
-    url = f'{BASE_PATH}/topics/'
-
-    response = test_client.post(url, data=json.dumps(topic_data), content_type='application/json',
-                                headers=make_basic_auth_header(is_admin=False))
-
-    assert 403 == response.status_code
-
-    response_data = json.loads(response.data)
-    assert 'Admin rights required' == response_data['detail']
-
-
 def test_post_topic__topic_is_saved_in_db(test_client, make_basic_auth_header):
     topic_data = {'name': 'test_topic'}
 
@@ -220,45 +196,88 @@ def test_post_topic__topic_is_saved_in_db(test_client, make_basic_auth_header):
     assert topic_data['name'] == db_topic.name
 
 
-@mock.patch('subscription_manager.db.topics.update_topic', side_effect=IntegrityError(None, None, None))
-def test_put_topic__db_error__returns_409(mock_update_topic, test_client, generate_topic, make_basic_auth_header):
-    topic = generate_topic('test_topic')
+# @mock.patch('subscription_manager.db.topics.update_topic', side_effect=IntegrityError(None, None, None))
+# def test_put_topic__db_error__returns_409(mock_update_topic, test_client, generate_topic, make_basic_auth_header):
+#     topic = generate_topic('test_topic')
+#
+#     topic_data = {'name': 'test_topic'}
+#
+#     url = f'{BASE_PATH}/topics/{topic.id}'
+#
+#     response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
+#                                headers=make_basic_auth_header(is_admin=True))
+#
+#     assert 409 == response.status_code
+#     response_data = json.loads(response.data)
+#     assert "Error while saving topic in DB" == response_data['detail']
+#
+#
+# def test_put_topic__topic_does_not_exist__returns_404(test_client, make_basic_auth_header):
+#     topic_data = {'active': False}
+#
+#     url = f'{BASE_PATH}/topics/1234'
+#
+#     response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
+#                                headers=make_basic_auth_header(is_admin=True))
+#
+#     assert 404 == response.status_code
+#
+#     response_data = json.loads(response.data)
+#     assert "Topic with id 1234 does not exist" == response_data['detail']
+#
+#
+# def test_put_topic__unauthorized_user__returns_401(test_client, generate_topic, make_basic_auth_header):
+#     topic = generate_topic('test_topic')
+#
+#     topic_data = {'name': 'test_topic'}
+#
+#     url = f'{BASE_PATH}/topics/{topic.id}'
+#
+#     response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
+#                                headers=make_basic_auth_header(authorized=False))
+#
+#     assert 401 == response.status_code
+#
+#     response_data = json.loads(response.data)
+#     assert 'Invalid credentials' == response_data['detail']
+#
+#
+# def test_put_topic__topic_is_updated(test_client, generate_topic, make_basic_auth_header):
+#     topic = generate_topic('test_topic')
+#
+#     topic_data = {'name': 'test_topic'}
+#
+#     url = f'{BASE_PATH}/topics/{topic.id}'
+#
+#     response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
+#                                headers=make_basic_auth_header(is_admin=True))
+#
+#     assert 200 == response.status_code
+#
+#     response_data = json.loads(response.data)
+#     assert topic_data['name'] == response_data['name']
+#
+#     db_topic = get_topic_by_id(response_data['id'])
+#     assert topic_data['name'] == db_topic.name
 
-    topic_data = {'name': 'test_topic'}
-
-    url = f'{BASE_PATH}/topics/{topic.id}'
-
-    response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=True))
-
-    assert 409 == response.status_code
-    response_data = json.loads(response.data)
-    assert "Error while saving topic in DB" == response_data['detail']
 
 
-def test_put_topic__topic_does_not_exist__returns_404(test_client, make_basic_auth_header):
-    topic_data = {'active': False}
+def test_delete_topic__topic_does_not_exist__returns_404(test_client, make_basic_auth_header):
 
-    url = f'{BASE_PATH}/topics/1234'
+    url = f'{BASE_PATH}/topics/123456'
 
-    response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=True))
+    response = test_client.get(url, headers=make_basic_auth_header())
 
     assert 404 == response.status_code
 
-    response_data = json.loads(response.data)
-    assert "Topic with id 1234 does not exist" == response_data['detail']
 
-
-def test_put_topic__unauthorized_user__returns_401(test_client, generate_topic, make_basic_auth_header):
+def test_delete_topic__unauthorized_user__returns_401(test_client, generate_topic,
+                                                             make_basic_auth_header):
     topic = generate_topic('test_topic')
-
-    topic_data = {'name': 'test_topic'}
 
     url = f'{BASE_PATH}/topics/{topic.id}'
 
-    response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
-                               headers=make_basic_auth_header(authorized=False))
+    response = test_client.get(url, headers=make_basic_auth_header(authorized=False))
 
     assert 401 == response.status_code
 
@@ -266,36 +285,23 @@ def test_put_topic__unauthorized_user__returns_401(test_client, generate_topic, 
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_put_topic__non_admin_user__returns_403(test_client, generate_topic, make_basic_auth_header):
+def test_delete_topic__topic_is_deleted_and_returns_204(test_client, generate_topic, generate_subscription,
+                                                        make_basic_auth_header):
     topic = generate_topic('test_topic')
 
-    topic_data = {'name': 'test_topic'}
+    # add some subscriptions with broker queues
+    subscriptions = [generate_subscription(topic, with_broker_queue=True) for _ in range(5)]
 
     url = f'{BASE_PATH}/topics/{topic.id}'
 
-    response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=False))
+    response = test_client.delete(url, headers=make_basic_auth_header())
 
-    assert 403 == response.status_code
+    assert 204 == response.status_code
 
-    response_data = json.loads(response.data)
-    assert 'Admin rights required' == response_data['detail']
+    # check that the topic has been deleted from db
+    response = test_client.get(url, headers=make_basic_auth_header())
+    assert 404 == response.status_code
 
-
-def test_put_topic__topic_is_updated(test_client, generate_topic, make_basic_auth_header):
-    topic = generate_topic('test_topic')
-
-    topic_data = {'name': 'test_topic'}
-
-    url = f'{BASE_PATH}/topics/{topic.id}'
-
-    response = test_client.put(url, data=json.dumps(topic_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=True))
-
-    assert 200 == response.status_code
-
-    response_data = json.loads(response.data)
-    assert topic_data['name'] == response_data['name']
-
-    db_topic = get_topic_by_id(response_data['id'])
-    assert topic_data['name'] == db_topic.name
+    # check that the broker queues have been deleted
+    for subscription in subscriptions:
+        assert broker.get_queue(subscription.queue) is None

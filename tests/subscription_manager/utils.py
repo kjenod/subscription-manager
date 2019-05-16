@@ -38,12 +38,12 @@ def _unique_id():
     return uuid4().hex
 
 
-def make_topic(name='test_topic'):
+def make_topic(name: str ='test_topic') -> Topic:
     return Topic(name=name)
 
 
-def make_subscription():
+def make_subscription(topic=None) -> Subscription:
     return Subscription(
-        topic = make_topic(name=_unique_id()),
+        topic = topic or make_topic(name=_unique_id()),
         queue = _unique_id()
     )
