@@ -13,3 +13,5 @@ dependencies:
   - marshmallow-sqlalchemy
   - psycopg2-binary
   - PyJWT
+  - git+ssh://git@bitbucket.org/antavelos-eurocontrol/rest-client.git
+  - git+ssh://git@bitbucket.org/antavelos-eurocontrol/broker-rest-client.git
