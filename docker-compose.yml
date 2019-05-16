@@ -10,6 +10,8 @@ services:
 #      - ./docker/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
+    networks:
+      - backend
 
   rabbitmq:
     image: rabbitmq_amqp10
@@ -24,3 +26,10 @@ services:
       - "8883:8883"
     volumes:
       - "${CERTS_FOLDER}:/certs/"
+    networks:
+      - backend
+
+
+networks:
+  backend:
+    driver: bridge
