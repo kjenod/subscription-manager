@@ -31,7 +31,7 @@ import typing as t
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from backend.db import db_save, db
+from backend.db import db_save, db, db_delete
 from subscription_manager.db import Topic
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -56,3 +56,7 @@ def create_topic(topic: Topic) -> Topic:
 
 def update_topic(topic: Topic) -> Topic:
     return db_save(db.session, topic)
+
+
+def delete_topic(topic: Topic) -> None:
+    db_delete(db.session, topic)

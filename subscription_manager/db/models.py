@@ -40,6 +40,8 @@ class Topic(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False, unique=True)
 
+    subscriptions = db.relationship("Subscription", back_populates="topic")
+
 
 class QOS(enum.Enum):
     AT_LEAST_ONCE = "AT_LEAST_ONCE"
@@ -57,9 +59,9 @@ class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     topic_id = db.Column(db.Integer, db.ForeignKey(Topic.id), nullable=False)
 
-    queue = db.Column(db.String(128), nullable=False)
+    queue = db.Column(db.String(128), nullable=False, unique=True)
     active = db.Column(db.Boolean, nullable=False, default=True)
     qos = db.Column(db.Enum(QOS), nullable=False, default=QOS.EXACTLY_ONCE.value)
     durable = db.Column(db.Boolean, nullable=False, default=True)
 
-    topic = db.relationship("Topic")
+    topic = db.relationship("Topic", back_populates='subscriptions')

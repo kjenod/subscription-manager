@@ -31,7 +31,8 @@ import pytest
 
 from backend.db import db_save
 from subscription_manager.db import Subscription
-from subscription_manager.db.subscriptions import get_subscription_by_id, get_subscriptions, create_subscription, update_subscription
+from subscription_manager.db.subscriptions import get_subscription_by_id, get_subscriptions, create_subscription, \
+    update_subscription, delete_subscription, get_subscription_by_queue
 from tests.subscription_manager.utils import make_subscription
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -57,6 +58,19 @@ def test_get_subscription_by_id__object_exists_and_is_returned(generate_subscrip
 
     assert isinstance(db_subscription, Subscription)
     assert subscription.id == db_subscription.id
+
+
+def test_get_subscription_by_queue__does_not_exist__returns_none():
+    assert get_subscription_by_queue('inexistent_queue') is None
+
+
+def test_get_subscription_by_queue__object_exists_and_is_returned(generate_subscription):
+    subscription = generate_subscription()
+
+    db_subscription = get_subscription_by_queue(subscription.queue)
+
+    assert isinstance(db_subscription, Subscription)
+    assert subscription.queue == db_subscription.queue
 
 
 def test_get_subscriptions__no_subscription_in_db__returns_empty_list(generate_subscription):
@@ -98,3 +112,11 @@ def test_update_subscription(generate_subscription):
 
     assert isinstance(updated_subscription, Subscription)
     assert new_active == updated_subscription.active
+
+
+def test_delete_subscription(generate_subscription):
+    subscription = generate_subscription()
+
+    delete_subscription(subscription)
+
+    assert None is get_subscription_by_id(subscription.id)

@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import typing as t
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from backend.db import db_save, db
+from backend.db import db_save, db, db_delete
 from subscription_manager.db import Subscription
 from subscription_manager.db.utils import generate_queue
 
@@ -40,7 +40,16 @@ __author__ = "EUROCONTROL (SWIM)"
 def get_subscription_by_id(subscription_id: int) -> t.Union[Subscription, None]:
     try:
         result = Subscription.query.get(subscription_id)
-    except (NoResultFound, MultipleResultsFound):
+    except NoResultFound:
+        result = None
+
+    return result
+
+
+def get_subscription_by_queue(queue: str) -> t.Union[Subscription, None]:
+    try:
+        result = Subscription.query.filter_by(queue=queue).one()
+    except NoResultFound:
         result = None
 
     return result
@@ -59,3 +68,7 @@ def create_subscription(subscription: Subscription) -> Subscription:
 
 def update_subscription(subscription: Subscription) -> Subscription:
     return db_save(db.session, subscription)
+
+
+def delete_subscription(subscription: Subscription) -> None:
+    db_delete(db.session, subscription)

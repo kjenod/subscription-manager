@@ -31,7 +31,7 @@ import pytest
 
 from backend.db import db_save
 from subscription_manager.db import Topic
-from subscription_manager.db.topics import get_topic_by_id, get_topics, create_topic, update_topic
+from subscription_manager.db.topics import get_topic_by_id, get_topics, create_topic, update_topic, delete_topic
 from tests.subscription_manager.utils import make_topic
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -93,3 +93,11 @@ def test_update_topic(generate_topic):
 
     assert isinstance(updated_topic, Topic)
     assert 'new name' == updated_topic.name
+
+
+def test_delete_topic(generate_topic):
+    topic = generate_topic('test_topic')
+
+    delete_topic(topic)
+
+    assert None is get_topic_by_id(topic.id)
