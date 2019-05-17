@@ -74,6 +74,7 @@ class SubscriptionSchema(BaseSchema):
         dump_only = ("id", "queue", "topic")
 
     topic_id = Integer(validate=validate_topic_id)
+    user_id = Integer(required=False)
     topic = Nested(TopicSchema)
 
     @post_dump

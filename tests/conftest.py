@@ -28,13 +28,16 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from base64 import b64encode
+from uuid import uuid4
 
 import pytest
 from pkg_resources import resource_filename
 
 from subscription_manager.app import create_app
 from backend.db import db as _db, db_save
-from tests.auth.utils import make_user
+from tests.auth.utils import make_user, make_basic_auth_header
+
+DEFAULT_LOGIN_PASSWORD = 'password'
 
 
 @pytest.yield_fixture(scope='session')
@@ -82,14 +85,26 @@ def session(db):
 
 
 @pytest.fixture(scope='function')
+def login_user(session):
+    user = make_user(uuid4().hex, DEFAULT_LOGIN_PASSWORD)
+    return db_save(session, user)
+
+
+@pytest.fixture(scope='function')
+def login_user_admin(session):
+    user = make_user(uuid4().hex, DEFAULT_LOGIN_PASSWORD, is_admin=True)
+    return db_save(session, user)
+
+
+@pytest.fixture(scope='function')
 def make_basic_auth_header(session):
     """
 
     :param session:
     :return:
     """
-    def helper(password='password', is_admin=False, authorized=True):
-        test_user = make_user(password=password, is_admin=is_admin)
+    def helper(username='username', password='password', is_admin=False, authorized=True):
+        test_user = make_user(username=username, password=password, is_admin=is_admin)
 
         if authorized:
             db_save(session, test_user)
@@ -99,6 +114,7 @@ def make_basic_auth_header(session):
         return result
 
     return helper
+
 
 
 def _make_basic_auth_header(username, password):

@@ -29,6 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import enum
 
+from auth.db import User
 from backend.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -39,8 +40,6 @@ class Topic(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False, unique=True)
-
-    subscriptions = db.relationship("Subscription", back_populates="topic")
 
 
 class QOS(enum.Enum):
@@ -58,10 +57,12 @@ class Subscription(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     topic_id = db.Column(db.Integer, db.ForeignKey(Topic.id), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
 
     queue = db.Column(db.String(128), nullable=False, unique=True)
     active = db.Column(db.Boolean, nullable=False, default=True)
     qos = db.Column(db.Enum(QOS), nullable=False, default=QOS.EXACTLY_ONCE.value)
     durable = db.Column(db.Boolean, nullable=False, default=True)
 
-    topic = db.relationship("Topic", back_populates='subscriptions')
+    topic = db.relationship("Topic", backref='subscriptions')
+    user = db.relationship("User", backref='subscriptions')

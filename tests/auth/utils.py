@@ -27,6 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from base64 import b64encode
 from uuid import uuid4
 
 from auth.db import User
@@ -44,7 +45,15 @@ def make_user(username: str = 'username', password: str = 'password', is_admin: 
     :return:
     """
     return User(
-        username=f'{username}_{uuid4().hex}',
+        username=(username + uuid4().hex)[:50],
         password=hash_password(password),
         is_admin=is_admin
     )
+
+
+def make_basic_auth_header(username, password):
+    basic_auth_str = b64encode(bytes(f'{username}:{password}', 'utf-8'))
+
+    result = {'Authorization': f"Basic {basic_auth_str.decode('utf-8')}"}
+
+    return result

@@ -28,7 +28,7 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import typing as t
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound
 
 from backend.db import db_save, db, db_delete
 from subscription_manager.db import Subscription
@@ -37,26 +37,45 @@ from subscription_manager.db.utils import generate_queue
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_subscription_by_id(subscription_id: int) -> t.Union[Subscription, None]:
+def get_subscription_by_id(subscription_id: int, user_id: t.Optional[int] = None) -> t.Union[Subscription, None]:
+    filters = {
+        'id': subscription_id
+    }
+
+    if user_id:
+        filters['user_id'] = user_id
+
     try:
-        result = Subscription.query.get(subscription_id)
+        result = Subscription.query.filter_by(**filters).one()
     except NoResultFound:
         result = None
 
     return result
 
 
-def get_subscription_by_queue(queue: str) -> t.Union[Subscription, None]:
+def get_subscription_by_queue(queue: str, user_id: t.Optional[int] = None) -> t.Union[Subscription, None]:
+    filters = {
+        'queue': queue
+    }
+
+    if user_id:
+        filters['user_id'] = user_id
+
     try:
-        result = Subscription.query.filter_by(queue=queue).one()
+        result = Subscription.query.filter_by(**filters).one()
     except NoResultFound:
         result = None
 
     return result
 
 
-def get_subscriptions() -> t.List[Subscription]:
-    return Subscription.query.all()
+def get_subscriptions(user_id: t.Optional[int] = None) -> t.List[Subscription]:
+    filters = {}
+
+    if user_id:
+        filters['user_id'] = user_id
+
+    return Subscription.query.filter_by(**filters).all()
 
 
 def create_subscription(subscription: Subscription) -> Subscription:

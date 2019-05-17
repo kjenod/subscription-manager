@@ -38,35 +38,40 @@ from subscription_manager import BASE_PATH
 from auth.auth import HASH_METHOD
 from backend.db import db_save
 from auth.db.users import get_user_by_id
-from tests.auth.utils import make_user
+from tests.auth.utils import make_user, make_basic_auth_header
+from tests.conftest import DEFAULT_LOGIN_PASSWORD
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @pytest.fixture
 def generate_user(session):
-    def _generate_user():
-        user = make_user()
+    def _generate_user(is_admin=False):
+        user = make_user(is_admin=is_admin)
         return db_save(session, user)
 
     return _generate_user
 
 
-def test_get_user__user_does_not_exist__returns_404(test_client, make_basic_auth_header):
+def basic_auth_header(user):
+    return make_basic_auth_header(user.username, DEFAULT_LOGIN_PASSWORD)
+
+
+def test_get_user__user_does_not_exist__returns_404(test_client, login_user_admin):
     url = f'{BASE_PATH}/users/123456'
 
-    response = test_client.get(url, headers=make_basic_auth_header(is_admin=True))
+    response = test_client.get(url, headers=basic_auth_header(login_user_admin))
 
     assert 404 == response.status_code
 
 
-def test_get_user__unauthorized_user__returns_401(test_client, generate_user, make_basic_auth_header):
+def test_get_user__unauthorized_user__returns_401(test_client, generate_user):
     user = generate_user()
     user.password = 'password'
 
     url = f'{BASE_PATH}/users/{user.id}'
 
-    response = test_client.get(url, headers=make_basic_auth_header(authorized=False))
+    response = test_client.get(url, headers=make_basic_auth_header('fake_username', 'fake_password'))
 
     assert 401 == response.status_code
 
@@ -74,13 +79,12 @@ def test_get_user__unauthorized_user__returns_401(test_client, generate_user, ma
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_get_user__non_admin_user__returns_403(test_client, generate_user, make_basic_auth_header):
-    user = generate_user()
-    user.password = 'password'
+def test_get_user__non_admin_user__returns_403(test_client, generate_user):
+    user = generate_user(is_admin=False)
 
     url = f'{BASE_PATH}/users/{user.id}'
 
-    response = test_client.get(url, headers=make_basic_auth_header(is_admin=False))
+    response = test_client.get(url, headers=make_basic_auth_header(user.username, 'password'))
 
     assert 403 == response.status_code
 
@@ -88,13 +92,12 @@ def test_get_user__non_admin_user__returns_403(test_client, generate_user, make_
     assert 'Admin rights required' == response_data['detail']
 
 
-def test_get_user__user_exists_and_is_returned(test_client, generate_user, make_basic_auth_header):
+def test_get_user__user_exists_and_is_returned(test_client, generate_user, login_user_admin):
     user = generate_user()
-    user.password = 'password'
 
     url = f'{BASE_PATH}/users/{user.id}'
 
-    response = test_client.get(url, headers=make_basic_auth_header(is_admin=True))
+    response = test_client.get(url, headers=basic_auth_header(login_user_admin))
 
     assert 200 == response.status_code
 
@@ -104,12 +107,12 @@ def test_get_user__user_exists_and_is_returned(test_client, generate_user, make_
     assert user.is_admin == response_data['is_admin']
 
 
-def test_get_users__anauthorized_user__returns_401(test_client, generate_user, make_basic_auth_header):
+def test_get_users__anauthorized_user__returns_401(test_client, generate_user):
     users = [generate_user(), generate_user()]
 
     url = f'{BASE_PATH}/users/'
 
-    response = test_client.get(url, headers=make_basic_auth_header(authorized=False))
+    response = test_client.get(url, headers=make_basic_auth_header('fake_username', 'fake_password'))
 
     assert 401 == response.status_code
 
@@ -117,12 +120,12 @@ def test_get_users__anauthorized_user__returns_401(test_client, generate_user, m
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_get_users__non_admin_user__returns_403(test_client, generate_user, make_basic_auth_header):
+def test_get_users__non_admin_user__returns_403(test_client, generate_user, login_user):
     users = [generate_user(), generate_user()]
 
     url = f'{BASE_PATH}/users/'
 
-    response = test_client.get(url, headers=make_basic_auth_header(is_admin=False))
+    response = test_client.get(url, headers=basic_auth_header(login_user))
 
     assert 403 == response.status_code
 
@@ -130,12 +133,12 @@ def test_get_users__non_admin_user__returns_403(test_client, generate_user, make
     assert 'Admin rights required' == response_data['detail']
 
 
-def test_get_users__users_exist_and_are_returned_as_list(test_client, generate_user, make_basic_auth_header):
+def test_get_users__users_exist_and_are_returned_as_list(test_client, generate_user, login_user_admin):
     users = [generate_user(), generate_user()]
 
     url = f'{BASE_PATH}/users/'
 
-    response = test_client.get(url, headers=make_basic_auth_header(is_admin=True))
+    response = test_client.get(url, headers=basic_auth_header(login_user_admin))
 
     assert 200 == response.status_code
 
@@ -145,7 +148,7 @@ def test_get_users__users_exist_and_are_returned_as_list(test_client, generate_u
 
 
 @pytest.mark.parametrize('missing_property', ['username', 'password'])
-def test_post_user__missing_required_property__returns_400(test_client, missing_property, make_basic_auth_header):
+def test_post_user__missing_required_property__returns_400(test_client, missing_property, login_user_admin):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -156,7 +159,7 @@ def test_post_user__missing_required_property__returns_400(test_client, missing_
     url = f'{BASE_PATH}/users/'
 
     response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
-                                headers=make_basic_auth_header(is_admin=True))
+                                headers=basic_auth_header(login_user_admin))
 
     assert 400 == response.status_code
 
@@ -165,7 +168,7 @@ def test_post_user__missing_required_property__returns_400(test_client, missing_
 
 
 @mock.patch('auth.db.users.save_user', side_effect=IntegrityError(None, None, None))
-def test_post_user__db_error__returns_409(mock_create_user, test_client, generate_user, make_basic_auth_header):
+def test_post_user__db_error__returns_409(mock_create_user, test_client, generate_user, login_user_admin):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -174,14 +177,14 @@ def test_post_user__db_error__returns_409(mock_create_user, test_client, generat
     url = f'{BASE_PATH}/users/'
 
     response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
-                                headers=make_basic_auth_header(is_admin=True))
+                                headers=basic_auth_header(login_user_admin))
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
     assert "Error while saving user in DB" == response_data['detail']
 
 
-def test_post_user__anauthorized_user__returns_401(test_client, make_basic_auth_header):
+def test_post_user__unauthorized_user__returns_401(test_client):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -190,7 +193,7 @@ def test_post_user__anauthorized_user__returns_401(test_client, make_basic_auth_
     url = f'{BASE_PATH}/users/'
 
     response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
-                                headers=make_basic_auth_header(authorized=False))
+                                headers=make_basic_auth_header('fake_username', 'fake_password'))
 
     assert 401 == response.status_code
 
@@ -198,7 +201,7 @@ def test_post_user__anauthorized_user__returns_401(test_client, make_basic_auth_
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_post_user__non_admin_user__returns_403(test_client, make_basic_auth_header):
+def test_post_user__non_admin_user__returns_403(test_client, login_user):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -207,7 +210,7 @@ def test_post_user__non_admin_user__returns_403(test_client, make_basic_auth_hea
     url = f'{BASE_PATH}/users/'
 
     response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
-                                headers=make_basic_auth_header(is_admin=False))
+                                headers=basic_auth_header(login_user))
 
     assert 403 == response.status_code
 
@@ -215,7 +218,7 @@ def test_post_user__non_admin_user__returns_403(test_client, make_basic_auth_hea
     assert 'Admin rights required' == response_data['detail']
 
 
-def test_post_user__user_is_saved_in_db(test_client, make_basic_auth_header):
+def test_post_user__user_is_saved_in_db(test_client, login_user_admin):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -224,7 +227,7 @@ def test_post_user__user_is_saved_in_db(test_client, make_basic_auth_header):
     url = f'{BASE_PATH}/users/'
 
     response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
-                                headers=make_basic_auth_header(is_admin=True))
+                                headers=basic_auth_header(login_user_admin))
 
     assert 201 == response.status_code
 
@@ -241,7 +244,7 @@ def test_post_user__user_is_saved_in_db(test_client, make_basic_auth_header):
 
 
 @mock.patch('auth.db.users.save_user', side_effect=IntegrityError(None, None, None))
-def test_put_user__db_error__returns_409(mock_update_user, test_client, generate_user, make_basic_auth_header):
+def test_put_user__db_error__returns_409(mock_update_user, test_client, generate_user, login_user_admin):
     user = generate_user()
 
     user_data = {
@@ -252,14 +255,14 @@ def test_put_user__db_error__returns_409(mock_update_user, test_client, generate
     url = f'{BASE_PATH}/users/{user.id}'
 
     response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=True))
+                               headers=basic_auth_header(login_user_admin))
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
     assert "Error while saving user in DB" == response_data['detail']
 
 
-def test_put_user__user_does_not_exist__returns_404(test_client, make_basic_auth_header):
+def test_put_user__user_does_not_exist__returns_404(test_client, login_user_admin):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -268,7 +271,7 @@ def test_put_user__user_does_not_exist__returns_404(test_client, make_basic_auth
     url = f'{BASE_PATH}/users/1234'
 
     response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=True))
+                               headers=basic_auth_header(login_user_admin))
 
     assert 404 == response.status_code
 
@@ -276,7 +279,7 @@ def test_put_user__user_does_not_exist__returns_404(test_client, make_basic_auth
     assert "User with id 1234 does not exist" == response_data['detail']
 
 
-def test_put_user__unauthorized_user__returns_401(test_client, generate_user, make_basic_auth_header):
+def test_put_user__unauthorized_user__returns_401(test_client, generate_user):
     user = generate_user()
 
     user_data = {
@@ -286,7 +289,7 @@ def test_put_user__unauthorized_user__returns_401(test_client, generate_user, ma
     url = f'{BASE_PATH}/users/{user.id}'
 
     response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
-                               headers=make_basic_auth_header(authorized=False))
+                               headers=make_basic_auth_header('fake_username', 'fake_password'))
 
     assert 401 == response.status_code
 
@@ -294,7 +297,7 @@ def test_put_user__unauthorized_user__returns_401(test_client, generate_user, ma
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_put_user__non_admin_user__returns_403(test_client, generate_user, make_basic_auth_header):
+def test_put_user__non_admin_user__returns_403(test_client, generate_user, login_user):
     user = generate_user()
 
     user_data = {
@@ -304,7 +307,7 @@ def test_put_user__non_admin_user__returns_403(test_client, generate_user, make_
     url = f'{BASE_PATH}/users/{user.id}'
 
     response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=False))
+                               headers=basic_auth_header(login_user))
 
     assert 403 == response.status_code
 
@@ -312,7 +315,7 @@ def test_put_user__non_admin_user__returns_403(test_client, generate_user, make_
     assert 'Admin rights required' == response_data['detail']
 
 
-def test_put_user__user_is_updated(test_client, generate_user, make_basic_auth_header):
+def test_put_user__user_is_updated(test_client, generate_user, login_user_admin):
     user = generate_user()
 
     user_data = {
@@ -322,7 +325,7 @@ def test_put_user__user_is_updated(test_client, generate_user, make_basic_auth_h
     url = f'{BASE_PATH}/users/{user.id}'
 
     response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=True))
+                               headers=basic_auth_header(login_user_admin))
 
     assert 200 == response.status_code
 
@@ -333,7 +336,7 @@ def test_put_user__user_is_updated(test_client, generate_user, make_basic_auth_h
     assert user_data['username'] == db_user.username
 
 
-def test_put_user__new_password_is_updated_and_hashed_correctly(test_client, generate_user, make_basic_auth_header):
+def test_put_user__new_password_is_updated_and_hashed_correctly(test_client, generate_user, login_user_admin):
     user = generate_user()
 
     user_data = {
@@ -343,7 +346,7 @@ def test_put_user__new_password_is_updated_and_hashed_correctly(test_client, gen
     url = f'{BASE_PATH}/users/{user.id}'
 
     response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
-                               headers=make_basic_auth_header(is_admin=True))
+                               headers=basic_auth_header(login_user_admin))
 
     assert 200 == response.status_code
 

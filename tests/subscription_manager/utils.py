@@ -30,11 +30,12 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from uuid import uuid4
 
 from subscription_manager.db import Topic, Subscription
+from tests.auth.utils import make_user
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def _unique_id():
+def unique_id():
     return uuid4().hex
 
 
@@ -42,8 +43,9 @@ def make_topic(name: str ='test_topic') -> Topic:
     return Topic(name=name)
 
 
-def make_subscription(topic=None) -> Subscription:
+def make_subscription(topic=None, user=None) -> Subscription:
     return Subscription(
-        topic = topic or make_topic(name=_unique_id()),
-        queue = _unique_id()
+        topic = topic or make_topic(name=unique_id()),
+        user = user or make_user(),
+        queue = unique_id()
     )

@@ -33,9 +33,7 @@ from copy import deepcopy
 from flask import request, current_app
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import make_transient
 
-from backend.auth import admin_required
 from backend.errors import ConflictError, NotFoundError, BadRequestError, BadGatewayError
 from backend.typing import JSONType
 from subscription_manager.broker import broker
@@ -56,7 +54,7 @@ def get_subscriptions() -> t.List[Subscription]:
              backend.errors.ForbiddenError (HTTP error 403)
     """
 
-    return db.get_subscriptions()
+    return db.get_subscriptions(user_id=request.user.id)
 
 
 @marshal_with(SubscriptionSchema)
@@ -70,7 +68,7 @@ def get_subscription(subscription_id: int) -> Subscription:
 
     """
 
-    result = db.get_subscription_by_id(subscription_id)
+    result = db.get_subscription_by_id(subscription_id, user_id=request.user.id)
 
     if result is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
@@ -88,9 +86,9 @@ def post_subscription() -> t.Tuple[Subscription, int]:
              backend.errors.BadRequestError (HTTP error 400)
              backend.errors.BadGatewayError (HTTP error 502)
     """
-
     try:
         subscription = unmarshal(SubscriptionSchema, request.get_json())
+        subscription.user_id = request.user.id
 
         events.create_subscription_event(subscription)
     except ValidationError as e:
@@ -114,7 +112,7 @@ def put_subscription(subscription_id: int) -> JSONType:
              backend.errors.BadRequestError (HTTP error 400)
     """
 
-    subscription = db.get_subscription_by_id(subscription_id)
+    subscription = db.get_subscription_by_id(subscription_id, user_id=request.user.id)
 
     if subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
@@ -141,7 +139,7 @@ def delete_subscription(subscription_id: int) -> t.Tuple[None, int]:
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
              backend.errors.NotFoundError (HTTP error 404)
     """
-    subscription = db.get_subscription_by_id(subscription_id)
+    subscription = db.get_subscription_by_id(subscription_id, user_id=request.user.id)
 
     if subscription is None:
         raise NotFoundError(f"Topic with id {subscription_id} does not exist")

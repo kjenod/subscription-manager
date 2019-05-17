@@ -33,6 +33,7 @@ from backend.db import db_save
 from subscription_manager.db import Subscription
 from subscription_manager.db.subscriptions import get_subscription_by_id, get_subscriptions, create_subscription, \
     update_subscription, delete_subscription, get_subscription_by_queue
+from tests.auth.utils import make_user
 from tests.subscription_manager.utils import make_subscription
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -40,41 +41,79 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @pytest.fixture
 def generate_subscription(session):
-    def _generate_subscription():
-        subscription = make_subscription()
+    def _generate_subscription(user=None):
+        subscription = make_subscription(user=user)
         return db_save(session, subscription)
 
     return _generate_subscription
+
+
+@pytest.fixture
+def generate_user(session):
+    def _generate_user():
+        user = make_user()
+        return db_save(session, user)
+
+    return _generate_user
 
 
 def test_get_subscription_by_id__does_not_exist__returns_none():
     assert get_subscription_by_id(1111) is None
 
 
+def test_get_subscription_by_id__does_not_belong_to_the_user__returns_none(generate_subscription):
+    subscription1 = generate_subscription()
+    subscription2 = generate_subscription()
+
+    assert get_subscription_by_id(subscription1.id, subscription2.user_id) is None
+    assert get_subscription_by_id(subscription2.id, subscription1.user_id) is None
+
+
 def test_get_subscription_by_id__object_exists_and_is_returned(generate_subscription):
     subscription = generate_subscription()
 
-    db_subscription = get_subscription_by_id(subscription.id)
+    db_subscription = get_subscription_by_id(subscription.id, subscription.user_id)
 
     assert isinstance(db_subscription, Subscription)
     assert subscription.id == db_subscription.id
+    assert subscription.user_id == db_subscription.user_id
 
 
 def test_get_subscription_by_queue__does_not_exist__returns_none():
     assert get_subscription_by_queue('inexistent_queue') is None
 
 
+def test_get_subscription_by_queue__does_not_belong_to_the_user__returns_none(generate_subscription):
+    subscription1 = generate_subscription()
+    subscription2 = generate_subscription()
+
+    assert get_subscription_by_queue(subscription1.queue, subscription2.user_id) is None
+    assert get_subscription_by_queue(subscription2.queue, subscription1.user_id) is None
+
+
 def test_get_subscription_by_queue__object_exists_and_is_returned(generate_subscription):
     subscription = generate_subscription()
 
-    db_subscription = get_subscription_by_queue(subscription.queue)
+    db_subscription = get_subscription_by_queue(subscription.queue, subscription.user_id)
 
     assert isinstance(db_subscription, Subscription)
     assert subscription.queue == db_subscription.queue
+    assert subscription.user_id == db_subscription.user_id
 
 
 def test_get_subscriptions__no_subscription_in_db__returns_empty_list(generate_subscription):
     db_subscriptions = get_subscriptions()
+
+    assert [] == db_subscriptions
+
+
+def test_get_subscriptions__no_subscription_in_db_for_user__returns_empty_list(generate_user, generate_subscription):
+    user1 = generate_user()
+    user2 = generate_user()
+    generate_subscription(user=user1)
+    generate_subscription(user=user1)
+
+    db_subscriptions = get_subscriptions(user_id=user2.id)
 
     assert [] == db_subscriptions
 
