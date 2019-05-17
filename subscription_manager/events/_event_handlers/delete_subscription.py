@@ -29,7 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from backend.db import db
 from subscription_manager.broker import broker
-from subscription_manager.events._event_handlers import EventHandler
+from backend.events import EventHandler
 
 __author__ = "EUROCONTROL (SWIM)"
 

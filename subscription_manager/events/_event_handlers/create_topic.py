@@ -28,21 +28,15 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from backend.db import db
-from subscription_manager.events._event_handlers import EventHandler
+from backend.events import EventHandler
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class CreateTopic(EventHandler):
-
+class DbCreateTopic(EventHandler):
     def __init__(self, topic):
         self.topic = topic
 
-    def do(self, *args, **kwargs): pass
-    def undo(self, *args, **kwargs): pass
-
-
-class DbCreateTopic(CreateTopic):
     def do(self, *args, **kwargs):
         db.create_topic(self.topic)
 

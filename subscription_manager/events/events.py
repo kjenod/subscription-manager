@@ -27,7 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-
+from backend.events import Event
 from backend.local import LazyProxy
 from subscription_manager.events.subscription_handlers import create_subscription_handler, update_subscription_handler, \
     delete_subscription_handler
@@ -35,42 +35,6 @@ from subscription_manager.events.topic_handlers import create_topic_handler, del
     delete_topic_subscriptions_handler
 
 __author__ = "EUROCONTROL (SWIM)"
-
-
-
-class Event(list):
-    """
-    Simplistic implementation of event handling.
-
-    A list of callable objects. Calling an instance of this will cause a
-    call to each item in the list in ascending order by index.
-    """
-    _type = 'Generic'
-
-    def __call__(self, *args, **kwargs):
-        for handler in self:
-            handler(*args, **kwargs)
-
-        # TODO: implement command design pattern with do/undo handlers
-        # processed_handlers = []
-        # for handler_class in self:
-        #     handler = handler_class(*args, **kwargs)
-        #
-        #     try:
-        #         handler.do()
-        #         processed_handlers.append(handler)
-        #     except:
-        #         handler.undo()
-        #
-        #         processed_handlers.reverse()
-        #         for processed_handler in processed_handlers:
-        #             processed_handler.undo()
-        #
-        #         raise
-
-
-    def __repr__(self):
-        return f"{self._type} Event({list.__repr__(self)})"
 
 
 class CreateTopicEvent(Event):
@@ -101,6 +65,9 @@ class DeleteSubscription(Event):
 # Topic events
 # ############
 
+# create_topic_event = LazyProxy(lambda: CreateTopicEvent([
+#     create_topic_handler
+# ]))
 create_topic_event = LazyProxy(lambda: CreateTopicEvent())
 create_topic_event.append(create_topic_handler)
 

@@ -27,17 +27,5 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import abc
 
 __author__ = "EUROCONTROL (SWIM)"
-
-
-class EventHandler(abc.ABC):
-
-    @abc.abstractmethod
-    def do(self, *args, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def undo(self, *args, **kwargs):
-        pass

@@ -27,21 +27,54 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from backend.db import db
-from backend.events import EventHandler
+import abc
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
+class Event(list):
+    """
+    Simplistic implementation of event handling.
 
-class DbUpdateTopic(EventHandler):
+    A list of callable objects. Calling an instance of this will cause a
+    call to each item in the list in ascending order by index.
+    """
+    _type = 'Generic'
 
-    def __init__(self, current_topic, updated_topic):
-        self.current_topic = current_topic
-        self.updated_topic = updated_topic
+    def __call__(self, *args, **kwargs):
+        for handler in self:
+            handler(*args, **kwargs)
 
+    def __repr__(self):
+        return f"{self._type} Event({list.__repr__(self)})"
+
+
+class EventSafe(list):
+
+    def __call__(self, *args, **kwargs):
+        handlers = [handler_class(*args, **kwargs) for handler_class in self]
+        processed_handlers = []
+
+        for handler in handlers:
+            try:
+                handler.do()
+                processed_handlers.append(handler)
+            except:
+                handler.undo()
+
+                processed_handlers.reverse()
+                for processed_handler in processed_handlers:
+                    processed_handler.undo()
+
+                raise
+
+
+class EventHandler(abc.ABC):
+
+    @abc.abstractmethod
     def do(self, *args, **kwargs):
-        db.update_topic(self.updated_topic)
+        pass
 
+    @abc.abstractmethod
     def undo(self, *args, **kwargs):
-        db.update_topic(self.current_topic)
+        pass

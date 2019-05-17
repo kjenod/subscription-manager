@@ -27,21 +27,33 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from backend.db import db
-from backend.events import EventHandler
+from backend.events import EventSafe
+from backend.local import LazyProxy
+from subscription_manager.events._event_handlers.create_topic import DbCreateTopic
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 
-class DbUpdateTopic(EventHandler):
+class CreateTopicEvent(EventSafe):
+    _type = 'Create topic'
 
-    def __init__(self, current_topic, updated_topic):
-        self.current_topic = current_topic
-        self.updated_topic = updated_topic
 
-    def do(self, *args, **kwargs):
-        db.update_topic(self.updated_topic)
+class DeleteTopicEvent(EventSafe):
+    _type = 'Delete topic'
 
-    def undo(self, *args, **kwargs):
-        db.update_topic(self.current_topic)
+
+class CreateSubscription(EventSafe):
+    _type = 'Create subscription'
+
+
+class UpdateSubscription(EventSafe):
+    _type = 'Update subscription'
+
+
+class DeleteSubscription(EventSafe):
+    _type = 'Delete subscription'
+
+
+create_topic_event = LazyProxy(lambda: CreateTopicEvent())
+create_topic_event.append(DbCreateTopic)
