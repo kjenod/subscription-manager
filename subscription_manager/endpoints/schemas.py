@@ -58,6 +58,7 @@ class TopicSchema(BaseSchema):
         model = Topic
         dump_only = ("id",)
 
+    user_id = Integer(required=False)
 
 def validate_topic_id(topic_id):
     topic = get_topic_by_id(topic_id)

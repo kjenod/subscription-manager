@@ -29,7 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import typing as t
 
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound
 
 from backend.db import db_save, db, db_delete
 from subscription_manager.db import Topic
@@ -37,17 +37,25 @@ from subscription_manager.db import Topic
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def get_topic_by_id(topic_id: int) -> t.Union[Topic, None]:
+def get_topic_by_id(topic_id: int, user_id: t.Optional[int] = None) -> t.Union[Topic, None]:
+    filters = {
+        'id': topic_id
+    }
+
+    if user_id:
+        filters['user_id'] = user_id
     try:
-        result = Topic.query.get(topic_id)
-    except (NoResultFound, MultipleResultsFound):
+        result = Topic.query.filter_by(**filters).one()
+    except NoResultFound:
         result = None
 
     return result
 
 
-def get_topics() -> t.List[Topic]:
-    return Topic.query.all()
+def get_topics(user_id: t.Optional[int] = None) -> t.List[Topic]:
+    filters = {'user_id': user_id} if user_id else {}
+
+    return Topic.query.filter_by(**filters).all()
 
 
 def create_topic(topic: Topic) -> Topic:

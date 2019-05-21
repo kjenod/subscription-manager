@@ -85,13 +85,13 @@ def session(db):
 
 
 @pytest.fixture(scope='function')
-def login_user(session):
+def test_user(session):
     user = make_user(uuid4().hex, DEFAULT_LOGIN_PASSWORD)
     return db_save(session, user)
 
 
 @pytest.fixture(scope='function')
-def login_user_admin(session):
+def test_admin_user(session):
     user = make_user(uuid4().hex, DEFAULT_LOGIN_PASSWORD, is_admin=True)
     return db_save(session, user)
 

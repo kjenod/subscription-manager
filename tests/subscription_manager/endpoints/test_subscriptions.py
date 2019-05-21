@@ -41,15 +41,15 @@ from subscription_manager.db.models import QOS
 from subscription_manager.db.subscriptions import get_subscription_by_id
 from tests.auth.utils import make_user, make_basic_auth_header
 from tests.conftest import DEFAULT_LOGIN_PASSWORD
-from tests.subscription_manager.utils import make_subscription, make_topic
+from tests.subscription_manager.utils import make_subscription, make_topic, basic_auth_header
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @pytest.fixture
 def generate_user(session):
-    def _generate_user(username, password):
-        user = make_user(username=username, password=password)
+    def _generate_user(username, password, is_admin=False):
+        user = make_user(username=username, password=password, is_admin=is_admin)
         return db_save(session, user)
     return _generate_user
 
@@ -76,29 +76,43 @@ def generate_subscription(session):
     return _generate_subscription
 
 
-def basic_auth_header(user):
-    return make_basic_auth_header(user.username, DEFAULT_LOGIN_PASSWORD)
-
-
-def test_get_subscription__subscription_does_not_exist__returns_404(test_client, login_user):
+def test_get_subscription__subscription_does_not_exist__returns_404(test_client, test_user):
     url = f'{BASE_PATH}/subscriptions/123456'
 
-    response = test_client.get(url, headers=basic_auth_header(login_user))
+    response = test_client.get(url, headers=basic_auth_header(test_user))
 
     assert 404 == response.status_code
 
 
 def test_get_subscription__user_tries_to_get_subscription_of_another_user__returns_404(test_client, generate_user,
                                                                                        generate_subscription):
-    user1 = generate_user('username1', 'password')
-    user2 = generate_user('username2', 'password')
+    user1 = generate_user('username1', DEFAULT_LOGIN_PASSWORD)
+    user2 = generate_user('username2', DEFAULT_LOGIN_PASSWORD)
     subscription = generate_subscription(user=user1)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
-    response = test_client.get(url, headers=make_basic_auth_header(user2.username, 'password'))
+    response = test_client.get(url, headers=basic_auth_header(user2))
 
     assert 404 == response.status_code
+
+
+def test_get_subscription__admin_user_can_get_subscription_of_another_user(test_client, test_user, test_admin_user,
+                                                                           generate_subscription):
+    subscription = generate_subscription(user=test_user)
+
+    url = f'{BASE_PATH}/subscriptions/{subscription.id}'
+
+    response = test_client.get(url, headers=basic_auth_header(test_admin_user))
+
+    assert 200 == response.status_code
+    response_data = json.loads(response.data)
+    assert subscription.topic.name == response_data['topic']['name']
+    assert subscription.queue == response_data['queue']
+    assert subscription.active == response_data['active']
+    assert subscription.qos.value == response_data['qos']
+    assert subscription.durable == response_data['durable']
+    assert subscription.id == response_data['id']
 
 
 def test_get_subscription__unauthorized_user__returns_401(test_client, generate_subscription):
@@ -114,12 +128,12 @@ def test_get_subscription__unauthorized_user__returns_401(test_client, generate_
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_get_subscription__subscription_exists_and_its_data_is_returned(test_client, generate_subscription, login_user):
-    subscription = generate_subscription(user=login_user)
+def test_get_subscription__subscription_exists_and_its_data_is_returned(test_client, generate_subscription, test_user):
+    subscription = generate_subscription(user=test_user)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
-    response = test_client.get(url, headers=basic_auth_header(login_user))
+    response = test_client.get(url, headers=basic_auth_header(test_user))
 
     assert 200 == response.status_code
 
@@ -134,18 +148,33 @@ def test_get_subscription__subscription_exists_and_its_data_is_returned(test_cli
 
 def test_get_subscriptions__no_subscription_exists_for_user__empty_list_is_returned(test_client, generate_user,
                                                                                     generate_subscription):
-    user1 = generate_user('username1', 'password')
-    user2 = generate_user('username2', 'password')
+    user1 = generate_user('username1', DEFAULT_LOGIN_PASSWORD)
+    user2 = generate_user('username2', DEFAULT_LOGIN_PASSWORD)
     generate_subscription(user=user1)
 
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.get(url, headers=make_basic_auth_header(user2.username, 'password'))
+    response = test_client.get(url, headers=basic_auth_header(user2))
 
     assert 200 == response.status_code
 
     response_data = json.loads(response.data)
     assert [] == response_data
+
+
+def test_get_subscriptions__admin_user_can_get_all_existing_subscriptions(test_client, test_admin_user, generate_user,
+                                                                          generate_subscription):
+    generate_subscription()
+    generate_subscription()
+
+    url = f'{BASE_PATH}/subscriptions/'
+
+    response = test_client.get(url, headers=basic_auth_header(test_admin_user))
+
+    assert 200 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert 2 == len(response_data)
 
 
 def test_get_subscriptions__unauthorized_user__returns_401(test_client):
@@ -159,13 +188,13 @@ def test_get_subscriptions__unauthorized_user__returns_401(test_client):
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_client, generate_subscription, login_user):
-    subscriptions = [generate_subscription(user=login_user),
-                     generate_subscription(user=login_user)]
+def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_client, generate_subscription, test_user):
+    subscriptions = [generate_subscription(user=test_user),
+                     generate_subscription(user=test_user)]
 
     url = f'{BASE_PATH}/subscriptions/'
 
-    response = test_client.get(url, headers=basic_auth_header(login_user))
+    response = test_client.get(url, headers=basic_auth_header(test_user))
 
     assert 200 == response.status_code
 
@@ -179,7 +208,7 @@ def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_cl
     assert [t.qos.value for t in subscriptions] == [d['qos'] for d in response_data]
 
 
-def test_post_subscription__missing_topic_id__returns_400(test_client, login_user):
+def test_post_subscription__missing_topic_id__returns_400(test_client, test_user):
     subscription_data = {
         'active': True,
         'qos': QOS.EXACTLY_ONCE.value,
@@ -189,7 +218,7 @@ def test_post_subscription__missing_topic_id__returns_400(test_client, login_use
     url = f'{BASE_PATH}/subscriptions/'
 
     response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
-                                headers=basic_auth_header(login_user))
+                                headers=basic_auth_header(test_user))
 
     assert 400 == response.status_code
 
@@ -197,7 +226,7 @@ def test_post_subscription__missing_topic_id__returns_400(test_client, login_use
     assert "'topic_id' is a required property" == response_data['detail']
 
 
-def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic, login_user):
+def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic, test_user):
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -210,7 +239,7 @@ def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic
     url = f'{BASE_PATH}/subscriptions/'
 
     response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
-                                headers=basic_auth_header(login_user))
+                                headers=basic_auth_header(test_user))
 
     assert 400 == response.status_code
 
@@ -218,7 +247,7 @@ def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic
     assert f"'invalid' is not one of {QOS.all()}" == response_data['detail']
 
 
-def test_post_subscription__invalid_topic_id__returns_400(test_client, login_user):
+def test_post_subscription__invalid_topic_id__returns_400(test_client, test_user):
     subscription_data = {
         'topic_id': 1234,
     }
@@ -226,7 +255,7 @@ def test_post_subscription__invalid_topic_id__returns_400(test_client, login_use
     url = f'{BASE_PATH}/subscriptions/'
 
     response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
-                                headers=basic_auth_header(login_user))
+                                headers=basic_auth_header(test_user))
 
     assert 400 == response.status_code
 
@@ -235,7 +264,7 @@ def test_post_subscription__invalid_topic_id__returns_400(test_client, login_use
 
 
 @mock.patch('subscription_manager.db.subscriptions.create_subscription', side_effect=IntegrityError(None, None, None))
-def test_post_subscription__db_error__returns_409(mock_create_subscription, test_client, generate_topic, login_user):
+def test_post_subscription__db_error__returns_409(mock_create_subscription, test_client, generate_topic, test_user):
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -248,7 +277,7 @@ def test_post_subscription__db_error__returns_409(mock_create_subscription, test
     url = f'{BASE_PATH}/subscriptions/'
 
     response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
-                                headers=basic_auth_header(login_user))
+                                headers=basic_auth_header(test_user))
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
@@ -256,7 +285,7 @@ def test_post_subscription__db_error__returns_409(mock_create_subscription, test
 
 
 @mock.patch('subscription_manager.broker.broker.create_queue_for_topic', side_effect=BrokerError('error'))
-def test_post_subscription__broker_error__returns_502(mock_queue_for_topic, test_client, generate_topic, login_user):
+def test_post_subscription__broker_error__returns_502(mock_queue_for_topic, test_client, generate_topic, test_user):
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -269,7 +298,7 @@ def test_post_subscription__broker_error__returns_502(mock_queue_for_topic, test
     url = f'{BASE_PATH}/subscriptions/'
 
     response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
-                                headers=basic_auth_header(login_user))
+                                headers=basic_auth_header(test_user))
 
     assert 502 == response.status_code
     response_data = json.loads(response.data)
@@ -291,14 +320,13 @@ def test_post_subscription__unauthorized_user__returns_401(test_client, generate
     response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
                                 headers=make_basic_auth_header('fake_username', 'fake_password'))
 
-
     assert 401 == response.status_code
 
     response_data = json.loads(response.data)
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_post_subscription__subscription_is_saved_in_db(test_client, generate_topic, login_user):
+def test_post_subscription__subscription_is_saved_in_db(test_client, generate_topic, test_user):
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -311,7 +339,7 @@ def test_post_subscription__subscription_is_saved_in_db(test_client, generate_to
     url = f'{BASE_PATH}/subscriptions/'
 
     response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
-                                headers=basic_auth_header(login_user))
+                                headers=basic_auth_header(test_user))
 
     assert 201 == response.status_code
 
@@ -336,13 +364,13 @@ def test_post_subscription__subscription_is_saved_in_db(test_client, generate_to
     broker.delete_queue(response_data['queue'])
 
 
-def test_put_subscription__subscription_does_not_exist__returns_404(test_client, login_user):
+def test_put_subscription__subscription_does_not_exist__returns_404(test_client, test_user):
     subscription_data = {'active': False}
 
     url = f'{BASE_PATH}/subscriptions/1234'
 
     response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
-                               headers=basic_auth_header(login_user))
+                               headers=basic_auth_header(test_user))
 
     assert 404 == response.status_code
 
@@ -350,8 +378,8 @@ def test_put_subscription__subscription_does_not_exist__returns_404(test_client,
     assert "Subscription with id 1234 does not exist" == response_data['detail']
 
 
-def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscription, login_user):
-    subscription = generate_subscription(user=login_user)
+def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscription, test_user):
+    subscription = generate_subscription(user=test_user)
 
     subscription_data = {
         'topic_id': subscription.topic.id,
@@ -363,7 +391,7 @@ def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscr
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
     response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
-                               headers=basic_auth_header(login_user))
+                               headers=basic_auth_header(test_user))
 
     assert 400 == response.status_code
 
@@ -371,8 +399,8 @@ def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscr
     assert f"'invalid' is not one of {QOS.all()}" == response_data['detail']
 
 
-def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_subscription, login_user):
-    subscription = generate_subscription(user=login_user)
+def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_subscription, test_user):
+    subscription = generate_subscription(user=test_user)
 
     subscription_data = {
         'topic_id': 1234,
@@ -381,7 +409,7 @@ def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_s
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
     response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
-                               headers=basic_auth_header(login_user))
+                               headers=basic_auth_header(test_user))
 
     assert 400 == response.status_code
 
@@ -394,15 +422,15 @@ def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_s
 @mock.patch('subscription_manager.db.subscriptions.update_subscription', side_effect=IntegrityError(None, None, None))
 def test_put_subscription__db_error__returns_409(mock_update_subscription, mock_bind_queue_to_topic,
                                                  mock_delete_queue_binding, test_client, generate_subscription,
-                                                 login_user):
-    subscription = generate_subscription(user=login_user)
+                                                 test_user):
+    subscription = generate_subscription(user=test_user)
 
-    subscription_data = {'active': not(subscription.active)}
+    subscription_data = {'active': not subscription.active}
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
     response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
-                               headers=basic_auth_header(login_user))
+                               headers=basic_auth_header(test_user))
 
     assert 409 == response.status_code
     response_data = json.loads(response.data)
@@ -412,26 +440,25 @@ def test_put_subscription__db_error__returns_409(mock_update_subscription, mock_
 @mock.patch('subscription_manager.broker.broker.delete_queue_binding', side_effect=BrokerError('error'))
 @mock.patch('subscription_manager.broker.broker.bind_queue_to_topic', side_effect=BrokerError('error'))
 def test_put_subscription__broker_error__returns_502(mock_bind_queue_to_topic, mock_delete_queue_binding, test_client,
-                                                     generate_subscription, login_user):
-    subscription = generate_subscription(user=login_user)
+                                                     generate_subscription, test_user):
+    subscription = generate_subscription(user=test_user)
 
-    subscription_data = {'active': not(subscription.active)}
+    subscription_data = {'active': not subscription.active}
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
     response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
-                               headers=basic_auth_header(login_user))
+                               headers=basic_auth_header(test_user))
 
     assert 502 == response.status_code
     response_data = json.loads(response.data)
     assert "Error while accessing broker: error" == response_data['detail']
 
 
-
 def test_put_subscription__unauthorized_user_returns_401(test_client, generate_subscription):
     subscription = generate_subscription()
 
-    subscription_data = {'active': not(subscription.active)}
+    subscription_data = {'active': not subscription.active}
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
@@ -444,16 +471,16 @@ def test_put_subscription__unauthorized_user_returns_401(test_client, generate_s
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_put_subscription__subscription_is_updated_in_db_and_broker(test_client, generate_subscription,
-                                                                    login_user):
-    subscription = generate_subscription(user=login_user, with_broker_queue=True)
+def test_put_subscription__admin_user_can_update_any_subscription(test_client, test_user, test_admin_user,
+                                                                  generate_subscription):
+    subscription = generate_subscription(user=test_user, with_broker_queue=True)
 
-    subscription_data = {'active': not(subscription.active)}
+    subscription_data = {'active': not subscription.active}
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
     response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
-                               headers=basic_auth_header(login_user))
+                               headers=make_basic_auth_header(test_admin_user.username, DEFAULT_LOGIN_PASSWORD))
 
     assert 200 == response.status_code
 
@@ -467,11 +494,33 @@ def test_put_subscription__subscription_is_updated_in_db_and_broker(test_client,
     broker.delete_queue(subscription.queue)
 
 
-def test_delete_subscription__subscription_does_not_exist__returns_404(test_client, login_user):
+def test_put_subscription__subscription_is_updated_in_db_and_broker(test_client, generate_subscription, test_user):
+    subscription = generate_subscription(user=test_user, with_broker_queue=True)
+
+    subscription_data = {'active': not subscription.active}
+
+    url = f'{BASE_PATH}/subscriptions/{subscription.id}'
+
+    response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
+                               headers=basic_auth_header(test_user))
+
+    assert 200 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert subscription_data['active'] == response_data['active']
+
+    db_subscription = get_subscription_by_id(subscription.id)
+    assert subscription_data['active'] == db_subscription.active
+
+    # remove the queue from the broker
+    broker.delete_queue(subscription.queue)
+
+
+def test_delete_subscription__subscription_does_not_exist__returns_404(test_client, test_user):
 
     url = f'{BASE_PATH}/subscriptions/123456'
 
-    response = test_client.get(url, headers=basic_auth_header(login_user))
+    response = test_client.get(url, headers=basic_auth_header(test_user))
 
     assert 404 == response.status_code
 
@@ -489,17 +538,35 @@ def test_delete_subscription__unauthorized_user__returns_401(test_client, genera
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_delete_subscription__subscription_is_deleted_and_returns_204(test_client, generate_subscription, login_user):
-    subscription = generate_subscription(user=login_user, with_broker_queue=True)
+def test_delete_subscription__admin_user_can_delete_any_subscription(test_client, test_user, test_admin_user,
+                                                                     generate_subscription):
+    subscription = generate_subscription(user=test_user, with_broker_queue=True)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
-    response = test_client.delete(url, headers=basic_auth_header(login_user))
+    response = test_client.delete(url, headers=basic_auth_header(test_admin_user))
 
     assert 204 == response.status_code
 
     # check that the subscription has been deleted from db
-    response = test_client.get(url, headers=basic_auth_header(login_user))
+    response = test_client.get(url, headers=basic_auth_header(test_user))
+    assert 404 == response.status_code
+
+    # check that the queue has been deleted form the broker
+    assert broker.get_queue(subscription.queue) is None
+
+
+def test_delete_subscription__subscription_is_deleted_and_returns_204(test_client, generate_subscription, test_user):
+    subscription = generate_subscription(user=test_user, with_broker_queue=True)
+
+    url = f'{BASE_PATH}/subscriptions/{subscription.id}'
+
+    response = test_client.delete(url, headers=basic_auth_header(test_user))
+
+    assert 204 == response.status_code
+
+    # check that the subscription has been deleted from db
+    response = test_client.get(url, headers=basic_auth_header(test_user))
     assert 404 == response.status_code
 
     # check that the queue has been deleted form the broker

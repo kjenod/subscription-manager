@@ -28,13 +28,11 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import typing as t
-from copy import deepcopy
 
 from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from backend.auth import admin_required
 from backend.errors import NotFoundError, ConflictError, BadRequestError
 from backend.typing import JSONType
 from subscription_manager.db import topics as db
@@ -52,8 +50,10 @@ def get_topics() -> JSONType:
 
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
     """
+    user = request.user
+    params = {} if user.is_admin else {'user_id': user.id}
 
-    return db.get_topics()
+    return db.get_topics(**params)
 
 
 @marshal_with(TopicSchema)
@@ -65,7 +65,10 @@ def get_topic(topic_id: int) -> JSONType:
              backend.errors.NotFoundError (HTTP error 404)
     """
 
-    result = db.get_topic_by_id(topic_id)
+    user = request.user
+    params = {} if user.is_admin else {'user_id': user.id}
+
+    result = db.get_topic_by_id(topic_id, **params)
 
     if result is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")
@@ -84,6 +87,7 @@ def post_topic() -> t.Tuple[JSONType, int]:
 
     try:
         topic = unmarshal(TopicSchema, request.get_json())
+        topic.user_id = request.user.id
 
         events.create_topic_event(topic)
     except ValidationError as e:
@@ -104,7 +108,10 @@ def post_topic() -> t.Tuple[JSONType, int]:
 #              backend.errors.BadRequestError (HTTP error 400)
 #     """
 #
-#     topic = db.get_topic_by_id(topic_id)
+#     user = request.user
+#     params = {} if user.is_admin else {'user_id': user.id}
+#
+#     topic = db.get_topic_by_id(topic_id, **params)
 #
 #     if topic is None:
 #         raise NotFoundError(f"Topic with id {topic_id} does not exist")
@@ -129,7 +136,10 @@ def delete_topic(topic_id: int) -> t.Tuple[None, int]:
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
              backend.errors.NotFoundError (HTTP error 404)
     """
-    topic = db.get_topic_by_id(topic_id)
+    user = request.user
+    params = {} if user.is_admin else {'user_id': user.id}
+
+    topic = db.get_topic_by_id(topic_id, **params)
 
     if topic is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")

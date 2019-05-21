@@ -32,6 +32,7 @@ import pytest
 from backend.db import db_save
 from subscription_manager.db import Topic
 from subscription_manager.db.topics import get_topic_by_id, get_topics, create_topic, update_topic, delete_topic
+from tests.auth.utils import make_user
 from tests.subscription_manager.utils import make_topic
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -39,15 +40,31 @@ __author__ = "EUROCONTROL (SWIM)"
 
 @pytest.fixture
 def generate_topic(session):
-    def _generate_topic(name):
-        topic = make_topic(name)
+    def _generate_topic(name, user=None):
+        topic = make_topic(name, user=user)
         return db_save(session, topic)
 
     return _generate_topic
 
+@pytest.fixture
+def generate_user(session):
+    def _generate_user():
+        user = make_user()
+        return db_save(session, user)
+
+    return _generate_user
+
 
 def test_get_topic_by_id__does_not_exist__returns_none():
     assert get_topic_by_id(1111) is None
+
+
+def test_get_topic_by_id__does_not_belong_to_the_user__returns_none(generate_topic):
+    topic1 = generate_topic('test_topic1')
+    topic2 = generate_topic('test_topic2')
+
+    assert get_topic_by_id(topic1.id, topic2.user_id) is None
+    assert get_topic_by_id(topic2.id, topic1.user_id) is None
 
 
 def test_get_topic_by_id__object_exists_and_is_returned(generate_topic):
@@ -61,6 +78,17 @@ def test_get_topic_by_id__object_exists_and_is_returned(generate_topic):
 
 def test_get_topics__no_topic_in_db__returns_empty_list(generate_topic):
     db_topics = get_topics()
+
+    assert [] == db_topics
+
+
+def test_get_topics__no_topic_in_db_for_user__returns_empty_list(generate_user, generate_topic):
+    user1 = generate_user()
+    user2 = generate_user()
+    generate_topic('test_topic1', user=user1)
+    generate_topic('test_topic2', user=user1)
+
+    db_topics = get_topics(user_id=user2.id)
 
     assert [] == db_topics
 

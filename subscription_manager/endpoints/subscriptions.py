@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import typing as t
 from copy import deepcopy
 
-from flask import request, current_app
+from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
@@ -53,8 +53,10 @@ def get_subscriptions() -> t.List[Subscription]:
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
              backend.errors.ForbiddenError (HTTP error 403)
     """
+    user = request.user
+    params = {} if user.is_admin else {'user_id': user.id}
 
-    return db.get_subscriptions(user_id=request.user.id)
+    return db.get_subscriptions(**params)
 
 
 @marshal_with(SubscriptionSchema)
@@ -67,8 +69,10 @@ def get_subscription(subscription_id: int) -> Subscription:
              backend.errors.NotFoundError (HTTP error 404)
 
     """
+    user = request.user
+    params = {} if user.is_admin else {'user_id': user.id}
 
-    result = db.get_subscription_by_id(subscription_id, user_id=request.user.id)
+    result = db.get_subscription_by_id(subscription_id, **params)
 
     if result is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
@@ -112,7 +116,10 @@ def put_subscription(subscription_id: int) -> JSONType:
              backend.errors.BadRequestError (HTTP error 400)
     """
 
-    subscription = db.get_subscription_by_id(subscription_id, user_id=request.user.id)
+    user = request.user
+    params = {} if user.is_admin else {'user_id': user.id}
+
+    subscription = db.get_subscription_by_id(subscription_id, **params)
 
     if subscription is None:
         raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
@@ -139,7 +146,10 @@ def delete_subscription(subscription_id: int) -> t.Tuple[None, int]:
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
              backend.errors.NotFoundError (HTTP error 404)
     """
-    subscription = db.get_subscription_by_id(subscription_id, user_id=request.user.id)
+    user = request.user
+    params = {} if user.is_admin else {'user_id': user.id}
+
+    subscription = db.get_subscription_by_id(subscription_id, **params)
 
     if subscription is None:
         raise NotFoundError(f"Topic with id {subscription_id} does not exist")

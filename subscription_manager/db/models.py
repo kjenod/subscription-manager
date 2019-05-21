@@ -40,6 +40,9 @@ class Topic(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
+
+    user = db.relationship("User", backref='topics')
 
 
 class QOS(enum.Enum):
