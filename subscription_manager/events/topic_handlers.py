@@ -27,7 +27,6 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from subscription_manager.broker import broker
 from subscription_manager.db import topics as db
 from subscription_manager.events.subscription_handlers import delete_subscription_handler
 

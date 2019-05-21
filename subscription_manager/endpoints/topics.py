@@ -97,7 +97,7 @@ def post_topic() -> t.Tuple[JSONType, int]:
         raise BadRequestError(str(e))
     except SQLAlchemyError as e:
         if is_duplicate_record_error(e):
-            raise ConflictError("Record with same data already exists in DB")
+            raise ConflictError("Topic with same data already exists in DB")
         raise
 
     return topic, 201
@@ -130,7 +130,7 @@ def post_topic() -> t.Tuple[JSONType, int]:
 #         raise BadRequestError(str(e))
 #     except SQLAlchemyError as e:
 #         if is_duplicate_record_error(e):
-#             raise ConflictError("Record with same data already exists in DB")
+#             raise ConflictError("Topic with same data already exists in DB")
 #         raise
 #
 #     return updated_topic

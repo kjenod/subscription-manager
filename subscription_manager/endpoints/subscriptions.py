@@ -102,7 +102,7 @@ def post_subscription() -> t.Tuple[Subscription, int]:
         raise BadGatewayError(f"Error while accessing the broker: {str(e)}")
     except SQLAlchemyError as e:
         if is_duplicate_record_error(e):
-            raise ConflictError("Record with same data already exists in DB")
+            raise ConflictError("Subscription with same data already exists in DB")
         raise
 
     return subscription, 201
@@ -138,7 +138,7 @@ def put_subscription(subscription_id: int) -> JSONType:
         raise BadGatewayError(f"Error while accessing broker: {str(e)}")
     except SQLAlchemyError as e:
         if is_duplicate_record_error(e):
-            raise ConflictError("Record with same data already exists in DB")
+            raise ConflictError("Subscription with same data already exists in DB")
         raise
 
     return updated_subscription
