@@ -56,9 +56,11 @@ class TopicSchema(BaseSchema):
 
     class Meta:
         model = Topic
+        load_only = ("user", "user_id", "subscriptions")
         dump_only = ("id",)
 
     user_id = Integer(required=False)
+
 
 def validate_topic_id(topic_id):
     topic = get_topic_by_id(topic_id)
@@ -71,7 +73,7 @@ class SubscriptionSchema(BaseSchema):
 
     class Meta:
         model = Subscription
-        load_only = ("topic_id",)
+        load_only = ("topic_id", "user", "user_id")
         dump_only = ("id", "queue", "topic")
 
     topic_id = Integer(validate=validate_topic_id)

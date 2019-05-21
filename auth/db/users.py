@@ -30,7 +30,6 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import typing as t
 
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from werkzeug.security import check_password_hash
 
 from auth.db import User
 from backend.db import db_save, db
