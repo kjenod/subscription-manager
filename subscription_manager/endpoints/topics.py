@@ -31,11 +31,11 @@ import typing as t
 
 from flask import request
 from marshmallow import ValidationError
-from sqlalchemy.exc import IntegrityError
-
-from backend.errors import NotFoundError, ConflictError, BadRequestError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from backend.errors import NotFoundError, ConflictError, BadRequestError, APIError
 from backend.typing import JSONType
 from subscription_manager.db import topics as db
+from subscription_manager.db.utils import is_duplicate_record_error
 from subscription_manager.endpoints.schemas import TopicSchema
 from backend.marshal import unmarshal, marshal_with
 from subscription_manager.events import events
@@ -95,8 +95,10 @@ def post_topic() -> t.Tuple[JSONType, int]:
         events.create_topic_event(topic)
     except ValidationError as e:
         raise BadRequestError(str(e))
-    except IntegrityError:
-        raise ConflictError("Error while saving topic in DB")
+    except SQLAlchemyError as e:
+        if is_duplicate_record_error(e):
+            raise ConflictError("Record with same data already exists in DB")
+        raise
 
     return topic, 201
 
@@ -126,8 +128,10 @@ def post_topic() -> t.Tuple[JSONType, int]:
 #         events.update_topic_event(current_topic, updated_topic)
 #     except ValidationError as e:
 #         raise BadRequestError(str(e))
-#     except IntegrityError:
-#         raise ConflictError("Error while saving topic in DB")
+#     except SQLAlchemyError as e:
+#         if is_duplicate_record_error(e):
+#             raise ConflictError("Record with same data already exists in DB")
+#         raise
 #
 #     return updated_topic
 
@@ -147,9 +151,6 @@ def delete_topic(topic_id: int) -> t.Tuple[None, int]:
     if topic is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")
 
-    try:
-        events.delete_topic_event(topic)
-    except IntegrityError:
-        raise ConflictError(f"Error while deleting topic {topic.id} from db")
+    events.delete_topic_event(topic)
 
     return None, 204

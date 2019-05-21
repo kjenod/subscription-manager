@@ -31,7 +31,7 @@ import json
 from unittest import mock
 
 import pytest
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.db import db_save
 from subscription_manager import BASE_PATH
@@ -263,8 +263,8 @@ def test_post_subscription__invalid_topic_id__returns_400(test_client, test_user
     assert f"'topic_id': ['there is no topic with id 1234']" == response_data['detail']
 
 
-@mock.patch('subscription_manager.db.subscriptions.create_subscription', side_effect=IntegrityError(None, None, None))
-def test_post_subscription__db_error__returns_409(mock_create_subscription, test_client, generate_topic, test_user):
+@mock.patch('subscription_manager.db.subscriptions.create_subscription', side_effect=SQLAlchemyError(None, None, None))
+def test_post_subscription__db_error__returns_500(mock_create_subscription, test_client, generate_topic, test_user):
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -279,9 +279,7 @@ def test_post_subscription__db_error__returns_409(mock_create_subscription, test
     response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
                                 headers=basic_auth_header(test_user))
 
-    assert 409 == response.status_code
-    response_data = json.loads(response.data)
-    assert "Error while saving subscription in DB" == response_data['detail']
+    assert 500 == response.status_code
 
 
 @mock.patch('subscription_manager.broker.broker.create_queue_for_topic', side_effect=BrokerError('error'))
@@ -419,8 +417,8 @@ def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_s
 
 @mock.patch('subscription_manager.broker.broker.delete_queue_binding', return_value=None)
 @mock.patch('subscription_manager.broker.broker.bind_queue_to_topic', return_value=None)
-@mock.patch('subscription_manager.db.subscriptions.update_subscription', side_effect=IntegrityError(None, None, None))
-def test_put_subscription__db_error__returns_409(mock_update_subscription, mock_bind_queue_to_topic,
+@mock.patch('subscription_manager.db.subscriptions.update_subscription', side_effect=SQLAlchemyError(None, None, None))
+def test_put_subscription__db_error__returns_500(mock_update_subscription, mock_bind_queue_to_topic,
                                                  mock_delete_queue_binding, test_client, generate_subscription,
                                                  test_user):
     subscription = generate_subscription(user=test_user)
@@ -432,9 +430,7 @@ def test_put_subscription__db_error__returns_409(mock_update_subscription, mock_
     response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
                                headers=basic_auth_header(test_user))
 
-    assert 409 == response.status_code
-    response_data = json.loads(response.data)
-    assert "Error while saving subscription in DB" == response_data['detail']
+    assert 500 == response.status_code
 
 
 @mock.patch('subscription_manager.broker.broker.delete_queue_binding', side_effect=BrokerError('error'))

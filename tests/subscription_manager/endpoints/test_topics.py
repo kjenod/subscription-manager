@@ -31,7 +31,7 @@ import json
 from unittest import mock
 
 import pytest
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.db import db_save
 from subscription_manager import BASE_PATH
@@ -198,8 +198,8 @@ def test_post_topic__missing_name__returns_400(test_client, test_user):
     assert "'name' is a required property" == response_data['detail']
 
 
-@mock.patch('subscription_manager.db.topics.create_topic', side_effect=IntegrityError(None, None, None))
-def test_post_topic__db_error__returns_409(mock_create_topic, test_client, generate_topic, test_user):
+@mock.patch('subscription_manager.db.topics.create_topic', side_effect=SQLAlchemyError(None, None, None))
+def test_post_topic__db_error__returns_500(mock_create_topic, test_client, generate_topic, test_user):
     topic_data = {'name': 'test_topic'}
 
     url = f'{BASE_PATH}/topics/'
@@ -207,9 +207,23 @@ def test_post_topic__db_error__returns_409(mock_create_topic, test_client, gener
     response = test_client.post(url, data=json.dumps(topic_data), content_type='application/json',
                                 headers=basic_auth_header(test_user))
 
+    assert 500 == response.status_code
+
+
+def test_post_topic__record_exists__returns_409(test_client, generate_topic, test_user):
+    topic = generate_topic('test_topic')
+
+    topic_data = {'name': topic.name}
+
+    url = f'{BASE_PATH}/topics/'
+
+    response = test_client.post(url, data=json.dumps(topic_data), content_type='application/json',
+                                headers=basic_auth_header(test_user))
+
     assert 409 == response.status_code
+
     response_data = json.loads(response.data)
-    assert "Error while saving topic in DB" == response_data['detail']
+    assert "Record with same data already exists in DB" == response_data['detail']
 
 
 def test_post_topic__unauthorized_user__returns_401(test_client, test_user):

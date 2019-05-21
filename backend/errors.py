@@ -43,7 +43,7 @@ _logger = LocalProxy(lambda: logging.getLogger(current_app.name))
 class APIError(Exception):
     title = None
     detail = None
-    status = HTTPStatus.BAD_REQUEST
+    status = HTTPStatus.SERVICE_UNAVAILABLE
 
     def __init__(self, detail, status=None):
         self.detail = detail

@@ -32,12 +32,13 @@ from copy import deepcopy
 
 from flask import request
 from marshmallow import ValidationError
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from backend.errors import ConflictError, NotFoundError, BadRequestError, BadGatewayError
 from backend.typing import JSONType
 from subscription_manager.broker import broker
 from subscription_manager.db import subscriptions as db, Subscription
+from subscription_manager.db.utils import is_duplicate_record_error
 from subscription_manager.endpoints.schemas import SubscriptionSchema
 from backend.marshal import unmarshal, marshal_with
 from subscription_manager.events import events
@@ -99,8 +100,10 @@ def post_subscription() -> t.Tuple[Subscription, int]:
         raise BadRequestError(str(e))
     except broker.BrokerError as e:
         raise BadGatewayError(f"Error while accessing the broker: {str(e)}")
-    except IntegrityError as e:
-        raise ConflictError(f"Error while saving subscription in DB")
+    except SQLAlchemyError as e:
+        if is_duplicate_record_error(e):
+            raise ConflictError("Record with same data already exists in DB")
+        raise
 
     return subscription, 201
 
@@ -133,8 +136,10 @@ def put_subscription(subscription_id: int) -> JSONType:
         raise BadRequestError(str(e))
     except broker.BrokerError as e:
         raise BadGatewayError(f"Error while accessing broker: {str(e)}")
-    except IntegrityError:
-        raise ConflictError("Error while saving subscription in DB")
+    except SQLAlchemyError as e:
+        if is_duplicate_record_error(e):
+            raise ConflictError("Record with same data already exists in DB")
+        raise
 
     return updated_subscription
 
@@ -158,7 +163,5 @@ def delete_subscription(subscription_id: int) -> t.Tuple[None, int]:
         events.delete_subscription_event(subscription)
     except broker.BrokerError as e:
         raise BadGatewayError(f"Error while accessing broker: {str(e)}")
-    except IntegrityError:
-        raise ConflictError(f"Error while deleting subscription {subscription.id} from db")
 
     return None, 204

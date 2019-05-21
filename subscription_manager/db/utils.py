@@ -29,9 +29,13 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import uuid
 
+from sqlalchemy.exc import SQLAlchemyError
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 def generate_queue():
     return uuid.uuid4().hex
+
+def is_duplicate_record_error(error: SQLAlchemyError):
+    return hasattr(error, 'orig') and error.orig.pgcode == '23505'
