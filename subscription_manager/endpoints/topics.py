@@ -44,16 +44,23 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 @marshal_with(TopicSchema, many=True)
+def get_topics_own() -> JSONType:
+    """
+    GET /topics/
+
+    :raises: backend.errors.UnauthorizedError (HTTP error 401)
+    """
+    return db.get_topics(user_id=request.user.id)
+
+
+@marshal_with(TopicSchema, many=True)
 def get_topics() -> JSONType:
     """
     GET /topics/
 
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
     """
-    user = request.user
-    params = {} if user.is_admin else {'user_id': user.id}
-
-    return db.get_topics(**params)
+    return db.get_topics()
 
 
 @marshal_with(TopicSchema)
@@ -64,11 +71,7 @@ def get_topic(topic_id: int) -> JSONType:
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
              backend.errors.NotFoundError (HTTP error 404)
     """
-
-    user = request.user
-    params = {} if user.is_admin else {'user_id': user.id}
-
-    result = db.get_topic_by_id(topic_id, **params)
+    result = db.get_topic_by_id(topic_id)
 
     if result is None:
         raise NotFoundError(f"Topic with id {topic_id} does not exist")

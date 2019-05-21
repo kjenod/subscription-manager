@@ -50,6 +50,27 @@ tags:
   - name: users
     description: Operations related users' creation and retrieval
 paths:
+  /topics/own:
+    get:
+      tags:
+        - topics
+      summary: retrieves all available topics of the logged in user
+      operationId: subscription_manager.endpoints.topics.get_topics_own
+      responses:
+        '200':
+          description: lists all available topics of the logged in user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /topics/:
     get:
       tags:

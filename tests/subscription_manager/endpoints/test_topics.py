@@ -81,17 +81,6 @@ def test_get_topic__topic_does_not_exist__returns_404(test_client, test_user):
 
     assert 404 == response.status_code
 
-def test_get_topic__user_tries_to_get_topic_of_another_user__returns_404(test_client, generate_user, generate_topic):
-    user1 = generate_user('username1', DEFAULT_LOGIN_PASSWORD)
-    user2 = generate_user('username2', DEFAULT_LOGIN_PASSWORD)
-    topic = generate_topic('test_topic', user=user1)
-
-    url = f'{BASE_PATH}/topics/{topic.id}'
-
-    response = test_client.get(url, headers=basic_auth_header(user2))
-
-    assert 404 == response.status_code
-
 
 def test_get_topic__admin_user_can_get_topic_of_another_user(test_client,  test_user, test_admin_user, generate_topic):
     topic = generate_topic('test_topic', user=test_user)
@@ -131,35 +120,6 @@ def test_get_topic__topic_exists_and_is_returned(test_client, generate_topic, te
     assert topic.name == response_data['name']
 
 
-def test_get_topics__no_topic_exists_for_user__empty_list_is_returned(test_client, generate_user, generate_topic):
-    user1 = generate_user('username1', DEFAULT_LOGIN_PASSWORD)
-    user2 = generate_user('username2', DEFAULT_LOGIN_PASSWORD)
-    generate_topic('test_topic', user=user1)
-
-    url = f'{BASE_PATH}/topics/'
-
-    response = test_client.get(url, headers=basic_auth_header(user2))
-
-    assert 200 == response.status_code
-
-    response_data = json.loads(response.data)
-    assert [] == response_data
-
-
-def test_get_topics__admin_user_can_get_all_existing_topics(test_client, test_admin_user, generate_user, generate_topic):
-    generate_topic('test_topic1')
-    generate_topic('test_topic2')
-
-    url = f'{BASE_PATH}/topics/'
-
-    response = test_client.get(url, headers=basic_auth_header(test_admin_user))
-
-    assert 200 == response.status_code
-
-    response_data = json.loads(response.data)
-    assert 2 == len(response_data)
-
-
 def test_get_topics__unauthorized_user__returns_401(test_client, test_user):
     url = f'{BASE_PATH}/topics/'
 
@@ -184,6 +144,45 @@ def test_get_topics__topics_exist_and_are_returned_as_list(test_client, generate
     assert isinstance(response_data, list)
     assert [t.name for t in topics] == [d['name'] for d in response_data]
 
+
+def test_get_topics_own__unauthorized_user__returns_401(test_client, test_user):
+    url = f'{BASE_PATH}/topics/own'
+
+    response = test_client.get(url, headers=make_basic_auth_header('fake_username', 'fake_password'))
+
+    assert 401 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert 'Invalid credentials' == response_data['detail']
+
+
+def test_get_topics_own__topics_exist_and_are_returned_as_list(test_client, generate_topic, test_user):
+    topics = [generate_topic('test_topic_1', user=test_user), generate_topic('test_topic_2', user=test_user)]
+
+    url = f'{BASE_PATH}/topics/own'
+
+    response = test_client.get(url, headers=basic_auth_header(test_user))
+
+    assert 200 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert isinstance(response_data, list)
+    assert [t.name for t in topics] == [d['name'] for d in response_data]
+
+
+def test_get_topics__no_topic_exists_for_user__empty_list_is_returned(test_client, generate_user, generate_topic):
+    user1 = generate_user('username1', DEFAULT_LOGIN_PASSWORD)
+    user2 = generate_user('username2', DEFAULT_LOGIN_PASSWORD)
+    generate_topic('test_topic', user=user1)
+
+    url = f'{BASE_PATH}/topics/own'
+
+    response = test_client.get(url, headers=basic_auth_header(user2))
+
+    assert 200 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert [] == response_data
 
 def test_post_topic__missing_name__returns_400(test_client, test_user):
     topic_data = {}

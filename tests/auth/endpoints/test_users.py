@@ -107,7 +107,7 @@ def test_get_user__user_exists_and_is_returned(test_client, generate_user, test_
     assert user.is_admin == response_data['is_admin']
 
 
-def test_get_users__anauthorized_user__returns_401(test_client, generate_user):
+def test_get_users__unauthorized_user__returns_401(test_client, generate_user):
     users = [generate_user(), generate_user()]
 
     url = f'{BASE_PATH}/users/'
