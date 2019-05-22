@@ -54,8 +54,11 @@ def get_subscriptions() -> t.List[Subscription]:
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
              backend.errors.ForbiddenError (HTTP error 403)
     """
+    params = request.args.to_dict()
+
     user = request.user
-    params = {} if user.is_admin else {'user_id': user.id}
+    if user.is_admin:
+        params.update({'user_id': user.id})
 
     return db.get_subscriptions(**params)
 
@@ -89,6 +92,7 @@ def post_subscription() -> t.Tuple[Subscription, int]:
     :raises: backend.errors.UnauthorizedError (HTTP error 401)
              backend.errors.ForbiddenError (HTTP error 403)
              backend.errors.BadRequestError (HTTP error 400)
+             backend.errors.ConflictError (HTTP error 409)
              backend.errors.BadGatewayError (HTTP error 502)
     """
     try:
@@ -117,6 +121,8 @@ def put_subscription(subscription_id: int) -> JSONType:
              backend.errors.ForbiddenError (HTTP error 403)
              backend.errors.NotFoundError (HTTP error 404)
              backend.errors.BadRequestError (HTTP error 400)
+             backend.errors.ConflictError (HTTP error 409)
+             backend.errors.BadGatewayError (HTTP error 502)
     """
 
     user = request.user

@@ -188,6 +188,22 @@ def test_get_subscriptions__unauthorized_user__returns_401(test_client):
     assert 'Invalid credentials' == response_data['detail']
 
 
+def test_get_subscriptions__filter_by_queue(test_client, generate_subscription, test_user):
+    subscriptions = [generate_subscription(user=test_user),
+                     generate_subscription(user=test_user)]
+
+    url = f'{BASE_PATH}/subscriptions/?queue={subscriptions[0].queue}'
+
+    response = test_client.get(url, headers=basic_auth_header(test_user))
+
+    assert 200 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert isinstance(response_data, list)
+    assert 1 == len(response_data)
+    assert subscriptions[0].queue == response_data[0]['queue']
+
+
 def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_client, generate_subscription, test_user):
     subscriptions = [generate_subscription(user=test_user),
                      generate_subscription(user=test_user)]

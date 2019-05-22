@@ -118,6 +118,15 @@ def test_get_subscriptions__no_subscription_in_db_for_user__returns_empty_list(g
     assert [] == db_subscriptions
 
 
+def test_get_subscriptions__filter_by_queue(generate_subscription):
+    subscriptions = [generate_subscription(), generate_subscription()]
+
+    db_subscriptions = get_subscriptions(queue=subscriptions[0].queue)
+
+    assert 1 == len(db_subscriptions)
+    assert subscriptions[0].queue == db_subscriptions[0].queue
+
+
 def test_get_subscriptions__existing_subscriptions_are_returned(generate_subscription):
     subscriptions = [generate_subscription(), generate_subscription()]
 

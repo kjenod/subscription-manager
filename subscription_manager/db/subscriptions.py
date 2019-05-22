@@ -69,11 +69,14 @@ def get_subscription_by_queue(queue: str, user_id: t.Optional[int] = None) -> t.
     return result
 
 
-def get_subscriptions(user_id: t.Optional[int] = None) -> t.List[Subscription]:
+def get_subscriptions(queue: t.Optional[str] = None, user_id: t.Optional[int] = None) -> t.List[Subscription]:
     filters = {}
 
     if user_id:
         filters['user_id'] = user_id
+
+    if queue:
+        filters['queue'] = queue
 
     return Subscription.query.filter_by(**filters).all()
 

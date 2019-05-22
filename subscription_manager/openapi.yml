@@ -213,6 +213,13 @@ paths:
         - subscriptions
       summary: retrieves all available subscriptions
       operationId: subscription_manager.endpoints.subscriptions.get_subscriptions
+      parameters:
+        - in: query
+          name: queue
+          description: filters the subscriptions by the given queue name
+          schema:
+            type: string
+          example: 'queue'
       responses:
         '200':
           description: lists all available subscriptions
@@ -258,6 +265,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
   /subscriptions/{subscription_id}:
     get:
       tags:
