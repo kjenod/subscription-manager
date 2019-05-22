@@ -223,7 +223,7 @@ def test_post_topic__record_exists__returns_409(test_client, generate_topic, tes
     assert 409 == response.status_code
 
     response_data = json.loads(response.data)
-    assert "Record with same data already exists in DB" == response_data['detail']
+    assert "Topic with same data already exists in DB" == response_data['detail']
 
 
 def test_post_topic__unauthorized_user__returns_401(test_client, test_user):

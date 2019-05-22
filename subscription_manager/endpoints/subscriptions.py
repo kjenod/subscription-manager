@@ -57,7 +57,7 @@ def get_subscriptions() -> t.List[Subscription]:
     params = request.args.to_dict()
 
     user = request.user
-    if user.is_admin:
+    if not user.is_admin:
         params.update({'user_id': user.id})
 
     return db.get_subscriptions(**params)
