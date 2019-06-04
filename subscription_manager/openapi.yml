@@ -49,7 +49,28 @@ tags:
     description: Operations related to (un)subscribing to a topic
   - name: users
     description: Operations related users' creation and retrieval
+  - name: ping
+    description: Checking operations like checking the credentials of a user
+
 paths:
+  /ping-credentials:
+    get:
+      tags:
+        - ping
+      summary: checks the credentials of the user who sends this request
+      operationId: subscription_manager.endpoints.ping.ping_credentials
+      responses:
+        '200':
+          description: the user is authenticated
+        '401':
+          description: the user is not authenticated
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /topics/own:
     get:
       tags:
@@ -219,7 +240,6 @@ paths:
           description: filters the subscriptions by the given queue name
           schema:
             type: string
-          example: 'queue'
       responses:
         '200':
           description: lists all available subscriptions
