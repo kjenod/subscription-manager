@@ -1,8 +1,13 @@
 
-SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://alex:alex@localhost:5432/testing'
+
+TESTING: True
+
+SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://swim:swim@0.0.0.0:5432/testing'
 SQLALCHEMY_TRACK_MODIFICATIONS: False  # silence the deprecation warning
 
-BROKER_HOST: 'localhost:15671'
-BROKER_USERNAME: 'guest'
-BROKER_PASSWORD: 'guest'
-BROKER_CERT_PATH: '/media/alex/Data/dev/work/eurocontrol/RabbitMQ-docker/certs/ca_certificate.pem'
+BROKER:
+  host: 'localhost:15671'
+  https: True
+  username: 'guest'
+  password: 'guest'
+  cert_path: '/secrets/ca_certificate.pem'

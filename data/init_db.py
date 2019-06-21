@@ -27,57 +27,54 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from pathlib import Path
+import logging
+import os
 
-import connexion
-from swagger_ui_bundle import swagger_ui_3_path
-from pkg_resources import resource_filename
+from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.security import generate_password_hash
 
-from backend.flask import configure_flask
-from backend.config import configure_logging, load_app_config
-from backend.db import db
-from data.init_db import init_db
+from auth.db import User
+from backend.db import db_save, db
 
 __author__ = "EUROCONTROL (SWIM)"
 
-
-# TODO: separate backend
-# TODO: separate auth
-# TODO: fix typing hints
+_logger = logging.getLogger(__name__)
 
 
-def create_app(config_file):
-    options = {'swagger_path': swagger_ui_3_path}
-    connexion_app = connexion.App(__name__, options=options)
-
-    connexion_app.add_api(Path('openapi.yml'), strict_validation=True)
-
-    app = connexion_app.app
-
-    app_config = load_app_config(package=__name__, filename=config_file)
-
-    app.config.update(app_config)
-
-    configure_flask(app)
-
-    configure_logging(app)
-
-    _configure_db(db, app)
-
-    return app
+def _save(obj):
+    try:
+        db_save(db.session, obj)
+    except Exception as e:
+        _logger.error(f"Couldn't save object {obj}: {str(e)}")
 
 
-def _configure_db(db, app):
+def _user_exists(user):
+    try:
+        db.session.query(User).filter_by(username=user.username).one()
+    except NoResultFound:
+        return False
 
-    with app.app_context():
-        db.init_app(app)
-        db.create_all()
+    return True
 
-        # initialize db with users
-        if not app.config['TESTING']:
-            init_db()
 
-if __name__ == '__main__':
-    config_file = resource_filename(__name__, 'dev_config.yml')
-    app = create_app(config_file)
-    app.run(host="0.0.0.0", port=8080, debug=False)
+def init_db():
+    admin = User(username=os.environ['SM_ADMIN_USERNAME'],
+                 password=generate_password_hash(os.environ['SM_ADMIN_PASSWORD']),
+                 active=True,
+                 is_admin=True)
+    if not _user_exists(admin):
+        _save(admin)
+
+    adsb = User(username=os.environ['SWIM_ADSB_USERNAME'],
+                password=generate_password_hash(os.environ['SWIM_ADSB_PASSWORD']),
+                active=True,
+                is_admin=True)
+    if not _user_exists(adsb):
+        _save(adsb)
+
+    explorer = User(username=os.environ['SWIM_EXPLORER_USERNAME'],
+                    password=generate_password_hash(os.environ['SWIM_EXPLORER_PASSWORD']),
+                    active=True,
+                    is_admin=True)
+    if not _user_exists(explorer):
+        _save(explorer)

@@ -32,7 +32,7 @@ from copy import deepcopy
 
 from flask import request
 from marshmallow import ValidationError
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.errors import ConflictError, NotFoundError, BadRequestError, BadGatewayError
 from backend.typing import JSONType

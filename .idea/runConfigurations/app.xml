@@ -5,6 +5,12 @@
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="SM_ADMIN_USERNAME" value="admin" />
+      <env name="SM_ADMIN_PASSWORD" value="admin" />
+      <env name="SWIM_ADSB_USERNAME" value="swim-adsb" />
+      <env name="SWIM_ADSB_PASSWORD" value="swim-adsb" />
+      <env name="SWIM_EXPLORER_USERNAME" value="swim-explorer" />
+      <env name="SWIM_EXPLORER_PASSWORD" value="swim-explorer" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/subscription_manager" />

@@ -37,12 +37,13 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 def _get_rabbitmq_rest_client():
+    config = app.config['BROKER']
     return RabbitMQRestClient.create(
-        host=app.config['BROKER_HOST'],
-        https=True,
-        username=app.config['BROKER_USERNAME'],
-        password=app.config['BROKER_PASSWORD'],
-        verify=app.config['BROKER_CERT_PATH']
+        host=config['host'],
+        https=config['https'],
+        username=config['username'],
+        password=config['password'],
+        verify=config.get('cert_path') or False
     )
 
 broker_client = AppContextProxy(_get_rabbitmq_rest_client)

@@ -565,7 +565,6 @@ components:
       type: object
       properties:
         topic:
-          type: object
           $ref: '#/components/schemas/Topic'
         id:
           type: number
