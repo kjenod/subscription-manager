@@ -8,10 +8,10 @@ dependencies:
 - SQLAlchemy
 - Werkzeug
 - pip:
+  - uwsgi
   - connexion[swagger-ui]
   - marshmallow
   - marshmallow-sqlalchemy
   - psycopg2-binary
-  - PyJWT
   - git+https://git@bitbucket.org/antavelos-eurocontrol/rest-client.git
   - git+https://git@bitbucket.org/antavelos-eurocontrol/broker-rest-client.git
