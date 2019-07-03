@@ -8,7 +8,7 @@ dependencies:
 - SQLAlchemy
 - Werkzeug
 - pip:
-  - uwsgi
+  - gunicorn
   - connexion[swagger-ui]
   - marshmallow
   - marshmallow-sqlalchemy

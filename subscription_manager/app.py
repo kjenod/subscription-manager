@@ -77,7 +77,9 @@ def _configure_db(db, app):
         if not app.config['TESTING']:
             init_db()
 
+
+config_file = resource_filename(__name__, 'dev_config.yml')
+app = create_app(config_file)
+
 if __name__ == '__main__':
-    config_file = resource_filename(__name__, 'dev_config.yml')
-    app = create_app(config_file)
     app.run(host="0.0.0.0", port=8080, debug=False)

@@ -33,7 +33,6 @@ from subscription_manager.app import create_app
 
 __author__ = "EUROCONTROL (SWIM)"
 
-
 config_file = resource_filename(__name__, 'dev_config.yml')
 app = create_app(config_file)
 
