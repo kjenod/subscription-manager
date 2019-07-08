@@ -1,5 +1,5 @@
 
-SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://swim:swim@localhost:5432/smdb'
+SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://{db_user}:{db_password}@localhost:5432/{db_name}'
 SQLALCHEMY_TRACK_MODIFICATIONS: false  # silence the deprecation warning
 
 BROKER:

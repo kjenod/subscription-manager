@@ -88,3 +88,4 @@ def property_has_changed(obj: db.Model,
     history = state.get_history(property, True)
 
     return history.has_changes()
+

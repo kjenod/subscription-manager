@@ -27,6 +27,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+import os
 from pathlib import Path
 
 import connexion
@@ -70,6 +71,14 @@ def create_app(config_file):
 def _configure_db(db, app):
 
     with app.app_context():
+
+        # update database uri from environment variables
+        app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].format(
+            db_user=os.environ.get('DB_USER'),
+            db_password=os.environ.get('DB_PASSWORD'),
+            db_name=os.environ.get('DB_NAME')
+        )
+
         db.init_app(app)
         db.create_all()
 
