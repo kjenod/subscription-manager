@@ -71,7 +71,6 @@ def create_app(config_file):
 def _configure_db(db, app):
 
     with app.app_context():
-
         # update database uri from environment variables
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].format(
             db_user=os.environ.get('DB_USER'),
@@ -87,8 +86,7 @@ def _configure_db(db, app):
             init_db()
 
 
-config_file = resource_filename(__name__, 'dev_config.yml')
-app = create_app(config_file)
-
 if __name__ == '__main__':
+    config_file = resource_filename(__name__, 'dev_config.yml')
+    app = create_app(config_file)
     app.run(host="0.0.0.0", port=8080, debug=False)
