@@ -5,12 +5,11 @@ services:
     image: postgres
     container_name: postgres
     volumes:
-      - db-data:/var/lib/postgresql/data
       - ./docker/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
-    networks:
-      - backend
+#    networks:
+#      - backend-dev
 
   rabbitmq:
     image: rabbitmq_amqp10
@@ -24,10 +23,10 @@ services:
       - "1883:1883"
       - "8883:8883"
     volumes:
-      - "${CERTS_FOLDER}:/certs/"
-    networks:
-      - backend
+      - /secrets/rabbitmq:/certs/
+#    networks:
+#      - backend-dev
 
-networks:
-  backend:
-    driver: bridge
+#networks:
+#  backend-dev:
+#    driver: bridge
