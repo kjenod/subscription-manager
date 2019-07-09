@@ -46,6 +46,7 @@ def _get_rabbitmq_rest_client():
         verify=config.get('cert_path') or False
     )
 
+
 broker_client = AppContextProxy(_get_rabbitmq_rest_client)
 
 
@@ -77,7 +78,7 @@ def bind_queue_to_topic(queue, topic, durable=False):
 def get_queue(queue):
     try:
         return broker_client.get_queue(queue)
-    except(APIError):
+    except APIError:
         return None
 
 

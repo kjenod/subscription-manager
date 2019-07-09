@@ -1,5 +1,6 @@
 name: subscription-manager
 dependencies:
+  - _libgcc_mutex=0.1=main
   - atomicwrites=1.3.0=py37_1
   - attrs=19.1.0=py37_1
   - ca-certificates=2019.5.15=0
@@ -24,13 +25,13 @@ dependencies:
   - pluggy=0.12.0=py_0
   - py=1.8.0=py37_0
   - pyparsing=2.4.0=py_0
-  - pytest=4.6.2=py37_0
+  - pytest=5.0.0=py37_0
   - pytest-cov=2.7.1=py_0
   - python=3.7.3=h0371630_0
   - readline=7.0=h7b6447c_5
   - setuptools=41.0.1=py37_0
   - six=1.12.0=py37_0
-  - sqlalchemy=1.3.4=py37h7b6447c_0
+  - sqlalchemy=1.3.5=py37h7b6447c_0
   - sqlite=3.28.0=h7b6447c_0
   - tk=8.6.8=hbc83047_0
   - wcwidth=0.1.7=py37_0
@@ -40,20 +41,25 @@ dependencies:
   - zipp=0.5.1=py_0
   - zlib=1.2.11=h7b6447c_3
   - pip:
+    - alembic==1.0.11
     - broker-rest-client==0.0.4
     - chardet==3.0.4
     - clickclick==1.2.2
     - connexion==2.3.0
+    - flask-migrate==2.5.2
+    - gunicorn==19.9.0
     - idna==2.8
     - inflection==0.3.1
     - jsonschema==2.6.0
+    - mako==1.0.13
     - marshmallow==2.19.5
     - marshmallow-sqlalchemy==0.17.0
     - openapi-spec-validator==0.2.7
     - psycopg2-binary==2.8.3
+    - python-dateutil==2.8.0
+    - python-editor==1.0.4
     - pyyaml==5.1.1
     - requests==2.22.0
     - rest-client==0.0.5
     - swagger-ui-bundle==0.0.5
     - urllib3==1.25.3
-    - uwsgi==2.0.18
