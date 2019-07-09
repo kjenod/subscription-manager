@@ -59,17 +59,20 @@ def basic_auth(username: str, password: str, required_scopes: t.Optional[t.List[
     return {}
 
 
-def admin_required(f: t.Callable) -> t.Callable:
+def admin_required(callback: t.Callable) -> t.Callable:
     """
     Decorator that determines whether the user is admin or not. To be used on endpoint views.
     :param f:
     :return:
     """
-    @wraps(f)
-    def wrapped(*args, **kwargs):
-        if request.user and not getattr(request.user, 'is_admin', False):
-            raise ForbiddenError('Admin rights required')
+    def wrapper(f: t.Callable) -> t.Callable:
+        @wraps(f)
+        def decorated(*args, **kwargs) -> t.Callable:
+            # if request.user and not getattr(request.user, 'is_admin', False):
+            if request.user and not callback(request.user):
+                raise ForbiddenError('Admin rights required')
 
-        return f(*args, **kwargs)
+            return f(*args, **kwargs)
 
-    return wrapped
+        return decorated
+    return wrapper

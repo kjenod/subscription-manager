@@ -45,7 +45,11 @@ from auth.endpoints.schemas import UserSchema
 __author__ = "EUROCONTROL (SWIM)"
 
 
-@admin_required
+def _admin_required_callback(user):
+    return getattr(user, 'is_admin', False)
+
+
+@admin_required(callback=_admin_required_callback)
 @marshal_with(UserSchema, many=True)
 def get_users() -> JSONType:
     """
@@ -58,7 +62,7 @@ def get_users() -> JSONType:
     return user_service.get_users()
 
 
-@admin_required
+@admin_required(callback=_admin_required_callback)
 @marshal_with(UserSchema)
 def get_user(user_id: int) -> JSONType:
     """
@@ -77,7 +81,7 @@ def get_user(user_id: int) -> JSONType:
     return result
 
 
-@admin_required
+@admin_required(callback=_admin_required_callback)
 @marshal_with(UserSchema)
 def post_user() -> t.Tuple[JSONType, int]:
     """
@@ -104,7 +108,7 @@ def post_user() -> t.Tuple[JSONType, int]:
     return user_created, 201
 
 
-@admin_required
+@admin_required(callback=_admin_required_callback)
 @marshal_with(UserSchema)
 def put_user(user_id: int) -> JSONType:
     """
