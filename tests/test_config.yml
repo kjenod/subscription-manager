@@ -2,7 +2,7 @@
 
 TESTING: True
 
-SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://{db_user}:{db_password}@localhost:5432/{db_name}'
+SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://test:test@localhost:5432/testdb'
 SQLALCHEMY_TRACK_MODIFICATIONS: False  # silence the deprecation warning
 
 BROKER:
