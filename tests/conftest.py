@@ -33,7 +33,7 @@ import pytest
 from pkg_resources import resource_filename
 
 from subscription_manager.app import create_app
-from backend.db import db as _db, db_save
+from swim_backend.db import db as _db, db_save
 from tests.subscription_manager.utils import make_user
 from tests.subscription_manager.utils import make_basic_auth_header
 

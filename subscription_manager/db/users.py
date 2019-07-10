@@ -32,7 +32,7 @@ import typing as t
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from subscription_manager.db.models import User
-from backend.db import db_save, db
+from swim_backend.db import db_save, db
 
 __author__ = "EUROCONTROL (SWIM)"
 

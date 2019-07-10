@@ -62,4 +62,5 @@ dependencies:
     - requests==2.22.0
     - rest-client==0.0.5
     - swagger-ui-bundle==0.0.5
+    - swim-backend==0.0.1
     - urllib3==1.25.3

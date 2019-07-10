@@ -27,8 +27,8 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from backend.events import EventSafe
-from backend.local import LazyProxy
+from swim_backend.events import EventSafe
+from swim_backend.local import LazyProxy
 from subscription_manager.events._event_handlers.create_topic import DbCreateTopic
 
 __author__ = "EUROCONTROL (SWIM)"

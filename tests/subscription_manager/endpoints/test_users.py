@@ -35,8 +35,8 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash
 
 from subscription_manager import BASE_PATH
-from backend.auth import HASH_METHOD
-from backend.db import db_save
+from swim_backend.auth import HASH_METHOD
+from swim_backend.db import db_save
 from subscription_manager.db.users import get_user_by_id
 from tests.subscription_manager.utils import make_user, make_basic_auth_header
 from tests.conftest import DEFAULT_LOGIN_PASSWORD

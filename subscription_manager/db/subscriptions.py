@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import typing as t
 from sqlalchemy.orm.exc import NoResultFound
 
-from backend.db import db_save, db, db_delete
+from swim_backend.db import db_save, db, db_delete
 from subscription_manager.db import Subscription
 from subscription_manager.db.utils import generate_queue
 

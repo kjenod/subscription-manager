@@ -29,7 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import pytest
 
-from backend.db import db_save
+from swim_backend.db import db_save
 from subscription_manager.db import Subscription
 from subscription_manager.db.subscriptions import get_subscription_by_id, get_subscriptions, create_subscription, \
     update_subscription, delete_subscription, get_subscription_by_queue

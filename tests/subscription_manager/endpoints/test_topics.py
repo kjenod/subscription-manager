@@ -33,7 +33,7 @@ from unittest import mock
 import pytest
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from backend.db import db_save
+from swim_backend.db import db_save
 from subscription_manager import BASE_PATH
 from subscription_manager.broker import broker
 from subscription_manager.db.topics import get_topic_by_id

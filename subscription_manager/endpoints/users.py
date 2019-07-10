@@ -33,11 +33,11 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from backend.auth import admin_required, hash_password
-from backend.db import property_has_changed
-from backend.errors import NotFoundError, ConflictError, BadRequestError
-from backend.marshal import marshal_with, unmarshal
-from backend.typing import JSONType
+from swim_backend.auth import admin_required, hash_password
+from swim_backend.db import property_has_changed
+from swim_backend.errors import NotFoundError, ConflictError, BadRequestError
+from swim_backend.marshal import marshal_with, unmarshal
+from swim_backend.typing import JSONType
 from subscription_manager.db import users as user_service
 from subscription_manager.db.models import User
 from subscription_manager.endpoints.schemas import UserSchema

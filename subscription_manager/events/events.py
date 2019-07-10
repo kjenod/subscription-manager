@@ -27,8 +27,8 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from backend.events import Event
-from backend.local import LazyProxy
+from swim_backend.events import Event
+from swim_backend.local import LazyProxy
 from subscription_manager.events.subscription_handlers import create_subscription_handler, update_subscription_handler, \
     delete_subscription_handler
 from subscription_manager.events.topic_handlers import create_topic_handler, delete_topic_handler, \

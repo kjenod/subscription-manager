@@ -29,7 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import pytest
 
-from backend.db import db_save
+from swim_backend.db import db_save
 from subscription_manager.db import Topic
 from subscription_manager.db.topics import get_topic_by_id, get_topics, create_topic, update_topic, delete_topic
 from tests.subscription_manager.utils import make_topic, make_user

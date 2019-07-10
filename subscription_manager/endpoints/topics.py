@@ -32,12 +32,12 @@ import typing as t
 from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from backend.errors import NotFoundError, ConflictError, BadRequestError, APIError
-from backend.typing import JSONType
+from swim_backend.errors import NotFoundError, ConflictError, BadRequestError, APIError
+from swim_backend.typing import JSONType
 from subscription_manager.db import topics as db
 from subscription_manager.db.utils import is_duplicate_record_error
 from subscription_manager.endpoints.schemas import TopicSchema
-from backend.marshal import unmarshal, marshal_with
+from swim_backend.marshal import unmarshal, marshal_with
 from subscription_manager.events import events
 
 __author__ = "EUROCONTROL (SWIM)"

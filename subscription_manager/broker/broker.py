@@ -31,7 +31,7 @@ from broker_rest_client.rabbitmq_rest_client import RabbitMQRestClient
 from flask import current_app as app
 from rest_client.errors import APIError
 
-from backend.local import AppContextProxy
+from swim_backend.local import AppContextProxy
 
 __author__ = "EUROCONTROL (SWIM)"
 

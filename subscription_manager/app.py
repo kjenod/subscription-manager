@@ -34,15 +34,14 @@ import connexion
 from swagger_ui_bundle import swagger_ui_3_path
 from pkg_resources import resource_filename
 
-from backend.flask import configure_flask
-from backend.config import configure_logging, load_app_config
-from backend.db import db
+from swim_backend.flask import configure_flask
+from swim_backend.config import configure_logging, load_app_config
+from swim_backend.db import db
 from data.init_db import init_db
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-# TODO: separate backend
 # TODO: add flask migrate for initial data
 # TODO: fix typing hints
 

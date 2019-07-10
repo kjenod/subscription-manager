@@ -34,13 +34,13 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.errors import ConflictError, NotFoundError, BadRequestError, BadGatewayError
-from backend.typing import JSONType
+from swim_backend.errors import ConflictError, NotFoundError, BadRequestError, BadGatewayError
+from swim_backend.typing import JSONType
 from subscription_manager.broker import broker
 from subscription_manager.db import subscriptions as db, Subscription
 from subscription_manager.db.utils import is_duplicate_record_error
 from subscription_manager.endpoints.schemas import SubscriptionSchema
-from backend.marshal import unmarshal, marshal_with
+from swim_backend.marshal import unmarshal, marshal_with
 from subscription_manager.events import events
 
 __author__ = "EUROCONTROL (SWIM)"

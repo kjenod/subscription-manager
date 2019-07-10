@@ -489,7 +489,7 @@ components:
     basicAuth:
       type: http
       scheme: basic
-      x-basicInfoFunc: backend.auth.basic_auth
+      x-basicInfoFunc: subscription_manager.auth.basic_auth
 
   schemas:
     TopicName:

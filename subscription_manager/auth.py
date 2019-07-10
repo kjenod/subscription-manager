@@ -29,63 +29,47 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import typing as t
 
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm.session import Session
-from sqlalchemy.exc import IntegrityError
+from flask import request
+from werkzeug.security import check_password_hash
 
+from swim_backend.errors import UnauthorizedError
+from subscription_manager.db import User
+from subscription_manager.db.users import get_user_by_username
 
 __author__ = "EUROCONTROL (SWIM)"
 
-db = SQLAlchemy()
 
-
-def db_save(session: Session, obj: t.Optional[db.Model]) -> t.Optional[db.Model]:
+def basic_auth(username: str, password: str, required_scopes: t.Optional[t.List[str]] = None) -> t.Dict[str, t.Any]:
     """
-    Saves an object in db and rollbacks before raising in case of DB error
-
-    :param session:
-    :param obj:
+    Implements basic authentication. The function will be called from the connexion library after it has decoded the
+    base64 encoded string "username:password" by the client.
+    The authenticated user will be added in the global Flask request for further usage.
+    :param username:
+    :param password:
+    :param required_scopes: it is required by connexion but OPENAPI 3 specs do not foresee scopes for basic
+                            authentication
     :return:
     """
     try:
-        session.add(obj)
-        session.commit()
-        return obj
-    except IntegrityError:
-        session.rollback()
-        raise
+        user = validate_credentials(username, password)
+    except ValueError as e:
+        raise UnauthorizedError(str(e))
+
+    request.user = user
+
+    return {}
 
 
-def db_delete(session: Session, obj: t.Optional[db.Model]) -> t.Optional[db.Model]:
+def validate_credentials(username: str, password: str) -> User:
     """
-    Saves an object in db and rollbacks before raising in case of DB error
-
-    :param session:
-    :param obj:
+    Checks if the provided username and password belong to an existing user in DB
+    :param username:
+    :param password:
     :return:
     """
-    try:
-        session.delete(obj)
-        session.commit()
-        return obj
-    except IntegrityError:
-        session.rollback()
-        raise
+    user = get_user_by_username(username)
 
+    if not user or not check_password_hash(user.password, password):
+        raise ValueError('Invalid credentials')
 
-def property_has_changed(obj: db.Model,
-                         property: str,
-                         db: SQLAlchemy = db) -> bool:
-    """
-    Indicates whether a property of an object has changed after it was loaded from DB.
-
-    :param obj:
-    :param property:
-    :param db:
-    :return:
-    """
-    state = db.inspect(obj)
-    history = state.get_history(property, True)
-
-    return history.has_changes()
-
+    return user

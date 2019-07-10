@@ -27,10 +27,10 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from backend.db import db
+from swim_backend.db import db
 from subscription_manager.broker import broker
 from subscription_manager.db.utils import generate_queue
-from backend.events import EventHandler
+from swim_backend.events import EventHandler
 
 __author__ = "EUROCONTROL (SWIM)"
 

@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import enum
 from datetime import datetime, timezone
 
-from backend.db import db
+from swim_backend.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
 

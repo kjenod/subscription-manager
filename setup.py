@@ -34,7 +34,7 @@ __author__ = "EUROCONTROL (SWIM)"
 setup(
     name='subscription-manager',
     version='0.0.1',
-    description='Subscription MAnager',
+    description='Subscription Manager',
     author='EUROCONTROL (SWIM)',
     author_email='',
     packages=find_packages(exclude=['tests']),
