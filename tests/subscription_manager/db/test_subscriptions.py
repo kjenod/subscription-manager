@@ -33,8 +33,7 @@ from backend.db import db_save
 from subscription_manager.db import Subscription
 from subscription_manager.db.subscriptions import get_subscription_by_id, get_subscriptions, create_subscription, \
     update_subscription, delete_subscription, get_subscription_by_queue
-from tests.auth.utils import make_user
-from tests.subscription_manager.utils import make_subscription
+from tests.subscription_manager.utils import make_subscription, make_user
 
 __author__ = "EUROCONTROL (SWIM)"
 

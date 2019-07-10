@@ -22,17 +22,36 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ==========================================
 
-Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative: 
+Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative:
 http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import enum
+from datetime import datetime, timezone
 
-from auth.db import User
 from backend.db import db
 
 __author__ = "EUROCONTROL (SWIM)"
+
+
+def created_at_default(context):
+    params = context.get_current_parameters()
+    if not params['created_at']:
+        return datetime.now(timezone.utc)
+
+
+class User(db.Model):
+
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    password = db.Column(db.String(256), nullable=False)
+    created_at = db.Column(db.DateTime(), nullable=False, default=created_at_default)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class Topic(db.Model):
@@ -69,3 +88,4 @@ class Subscription(db.Model):
 
     topic = db.relationship("Topic", backref='subscriptions')
     user = db.relationship("User", backref='subscriptions')
+

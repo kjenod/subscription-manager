@@ -43,7 +43,7 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 # TODO: separate backend
-# TODO: separate auth
+# TODO: add flask migrate for initial data
 # TODO: fix typing hints
 
 

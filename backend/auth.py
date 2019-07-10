@@ -31,9 +31,11 @@ import typing as t
 from functools import wraps
 
 from flask import request
+from werkzeug.security import check_password_hash, generate_password_hash
 
-from auth.auth import validate_credentials
 from backend.errors import UnauthorizedError, ForbiddenError
+from subscription_manager.db import User
+from subscription_manager.db.users import get_user_by_username
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -76,3 +78,25 @@ def admin_required(callback: t.Callable) -> t.Callable:
 
         return decorated
     return wrapper
+
+
+HASH_METHOD = 'pbkdf2:sha256'
+
+
+def validate_credentials(username: str, password: str) -> User:
+    """
+    Checks if the provided username and password belong to an existing user in DB
+    :param username:
+    :param password:
+    :return:
+    """
+    user = get_user_by_username(username)
+
+    if not user or not check_password_hash(user.password, password):
+        raise ValueError('Invalid credentials')
+
+    return user
+
+
+def hash_password(password: str) -> str:
+    return generate_password_hash(password, method=HASH_METHOD)

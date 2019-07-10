@@ -35,10 +35,10 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash
 
 from subscription_manager import BASE_PATH
-from auth.auth import HASH_METHOD
+from backend.auth import HASH_METHOD
 from backend.db import db_save
-from auth.db.users import get_user_by_id
-from tests.auth.utils import make_user, make_basic_auth_header
+from subscription_manager.db.users import get_user_by_id
+from tests.subscription_manager.utils import make_user, make_basic_auth_header
 from tests.conftest import DEFAULT_LOGIN_PASSWORD
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -167,7 +167,7 @@ def test_post_user__missing_required_property__returns_400(test_client, missing_
     assert f"'{missing_property}' is a required property" == response_data['detail']
 
 
-@mock.patch('auth.db.users.save_user', side_effect=IntegrityError(None, None, None))
+@mock.patch('subscription_manager.db.users.save_user', side_effect=IntegrityError(None, None, None))
 def test_post_user__db_error__returns_409(mock_create_user, test_client, generate_user, test_admin_user):
     user_data = {
         'username': 'username',
@@ -243,7 +243,7 @@ def test_post_user__user_is_saved_in_db(test_client, test_admin_user):
     assert check_password_hash(db_user.password, 'password') is True
 
 
-@mock.patch('auth.db.users.save_user', side_effect=IntegrityError(None, None, None))
+@mock.patch('subscription_manager.db.users.save_user', side_effect=IntegrityError(None, None, None))
 def test_put_user__db_error__returns_409(mock_update_user, test_client, generate_user, test_admin_user):
     user = generate_user()
 

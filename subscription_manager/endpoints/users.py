@@ -33,14 +33,14 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from backend.auth import admin_required
+from backend.auth import admin_required, hash_password
 from backend.db import property_has_changed
 from backend.errors import NotFoundError, ConflictError, BadRequestError
 from backend.marshal import marshal_with, unmarshal
 from backend.typing import JSONType
-from auth.auth import hash_password
-from auth.db import users as user_service, User
-from auth.endpoints.schemas import UserSchema
+from subscription_manager.db import users as user_service
+from subscription_manager.db.models import User
+from subscription_manager.endpoints.schemas import UserSchema
 
 __author__ = "EUROCONTROL (SWIM)"
 

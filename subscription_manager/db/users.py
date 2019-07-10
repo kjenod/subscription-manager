@@ -27,27 +27,47 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from datetime import datetime, timezone
+import typing as t
 
-from backend.db import db
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+
+from subscription_manager.db.models import User
+from backend.db import db_save, db
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def created_at_default(context):
-    params = context.get_current_parameters()
-    if not params['created_at']:
-        return datetime.now(timezone.utc)
+def get_user_by_id(user_id: int) -> t.Union[User, None]:
+    """
+
+    :param user_id: the id of the requested user
+    :return:
+    """
+    try:
+        result = User.query.get(user_id)
+    except (NoResultFound, MultipleResultsFound):
+        result = None
+
+    return result
 
 
-class User(db.Model):
+def get_user_by_username(username: str) -> t.Union[User, None]:
+    """
 
-    __tablename__ = 'users'
+    :param username: the username of the requested user
+    :return:
+    """
+    try:
+        result = User.query.filter_by(username=username).one()
+    except (NoResultFound, MultipleResultsFound):
+        result = None
 
-    id = db.Column(db.Integer, primary_key=True)
+    return result
 
-    username = db.Column(db.String(50), nullable=False, unique=True)
-    password = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(db.DateTime(), nullable=False, default=created_at_default)
-    active = db.Column(db.Boolean, nullable=False, default=True)
-    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+
+def get_users() -> t.List[User]:
+    return User.query.all()
+
+
+def save_user(user: User) -> User:
+    return db_save(db.session, user)

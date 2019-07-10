@@ -31,7 +31,7 @@ import json
 from unittest import mock
 
 import pytest
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.db import db_save
 from subscription_manager import BASE_PATH
@@ -39,9 +39,9 @@ from subscription_manager.broker import broker
 from subscription_manager.broker.broker import BrokerError
 from subscription_manager.db.models import QOS
 from subscription_manager.db.subscriptions import get_subscription_by_id
-from tests.auth.utils import make_user, make_basic_auth_header
-from tests.conftest import DEFAULT_LOGIN_PASSWORD
-from tests.subscription_manager.utils import make_subscription, make_topic, basic_auth_header
+from tests.conftest import DEFAULT_LOGIN_PASSWORD, basic_auth_header
+from tests.subscription_manager.utils import make_subscription, make_topic, make_user, \
+    make_basic_auth_header
 
 __author__ = "EUROCONTROL (SWIM)"
 

@@ -33,7 +33,7 @@ import os
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import generate_password_hash
 
-from auth.db import User
+from subscription_manager.db.models import User
 from backend.db import db_save, db
 
 __author__ = "EUROCONTROL (SWIM)"
