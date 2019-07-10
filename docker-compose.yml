@@ -8,8 +8,6 @@ services:
       - ./docker/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
-#    networks:
-#      - backend-dev
 
   rabbitmq:
     image: rabbitmq_amqp10
@@ -23,10 +21,4 @@ services:
       - "1883:1883"
       - "8883:8883"
     volumes:
-      - /secrets/rabbitmq:/certs/
-#    networks:
-#      - backend-dev
-
-#networks:
-#  backend-dev:
-#    driver: bridge
+      - ${CERTS_DIR}:/certs/
