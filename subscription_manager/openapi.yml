@@ -376,7 +376,7 @@ paths:
       tags:
         - users
       summary: retrieves all available users
-      operationId: auth.endpoints.users.get_users
+      operationId: subscription_manager.endpoints.users.get_users
       responses:
         '200':
           description: lists all available users
@@ -396,7 +396,7 @@ paths:
       tags:
         - users
       summary: creates a new user
-      operationId: auth.endpoints.users.post_user
+      operationId: subscription_manager.endpoints.users.post_user
       requestBody:
         content:
           application/json:
@@ -427,7 +427,7 @@ paths:
       tags:
         - users
       summary: retrieves a user by its id
-      operationId: auth.endpoints.users.get_user
+      operationId: subscription_manager.endpoints.users.get_user
       parameters:
         - in: path
           name: user_id
@@ -453,7 +453,7 @@ paths:
       tags:
         - users
       summary: updates an existing user
-      operationId: auth.endpoints.users.put_user
+      operationId: subscription_manager.endpoints.users.put_user
       parameters:
         - in: path
           name: user_id

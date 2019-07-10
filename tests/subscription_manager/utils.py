@@ -27,11 +27,11 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from base64 import b64encode
 from uuid import uuid4
 
-from subscription_manager.db import Topic, Subscription
-from tests.auth.utils import make_user, make_basic_auth_header
-from tests.conftest import DEFAULT_LOGIN_PASSWORD
+from backend.auth import hash_password
+from subscription_manager.db import Topic, Subscription, User
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -55,5 +55,24 @@ def make_subscription(topic=None, user=None) -> Subscription:
     )
 
 
-def basic_auth_header(user):
-    return make_basic_auth_header(user.username, DEFAULT_LOGIN_PASSWORD)
+def make_user(username: str = 'username', password: str = 'password', is_admin: bool = False) -> User:
+    """
+
+    :param username:
+    :param password:
+    :param is_admin:
+    :return:
+    """
+    return User(
+        username=(username + uuid4().hex)[:50],
+        password=hash_password(password),
+        is_admin=is_admin
+    )
+
+
+def make_basic_auth_header(username, password):
+    basic_auth_str = b64encode(bytes(f'{username}:{password}', 'utf-8'))
+
+    result = {'Authorization': f"Basic {basic_auth_str.decode('utf-8')}"}
+
+    return result

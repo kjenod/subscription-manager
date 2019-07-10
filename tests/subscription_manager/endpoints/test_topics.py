@@ -37,9 +37,9 @@ from backend.db import db_save
 from subscription_manager import BASE_PATH
 from subscription_manager.broker import broker
 from subscription_manager.db.topics import get_topic_by_id
-from tests.auth.utils import make_basic_auth_header, make_user
-from tests.conftest import DEFAULT_LOGIN_PASSWORD
-from tests.subscription_manager.utils import make_topic, make_subscription, basic_auth_header
+from tests.conftest import DEFAULT_LOGIN_PASSWORD, basic_auth_header
+from tests.subscription_manager.utils import make_topic, make_subscription, make_user, \
+    make_basic_auth_header
 
 __author__ = "EUROCONTROL (SWIM)"
 

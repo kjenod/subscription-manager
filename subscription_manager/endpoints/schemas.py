@@ -33,7 +33,7 @@ from marshmallow.fields import Nested, Integer
 from marshmallow_sqlalchemy import ModelSchemaOpts, ModelSchema
 
 from backend.db import db
-from subscription_manager.db.models import Topic, Subscription
+from subscription_manager.db.models import Topic, Subscription, User
 from subscription_manager.db.topics import get_topic_by_id
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -83,3 +83,12 @@ class SubscriptionSchema(BaseSchema):
     @post_dump
     def serialize_qos(self, subscription_data):
         subscription_data['qos'] = subscription_data['qos'].value
+
+
+class UserSchema(BaseSchema):
+
+    class Meta:
+        model = User
+        load_only = ("password",)
+        dump_only = ("id",)
+        exclude = ('topics', 'subscriptions',)

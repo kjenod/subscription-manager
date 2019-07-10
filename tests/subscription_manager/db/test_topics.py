@@ -32,8 +32,7 @@ import pytest
 from backend.db import db_save
 from subscription_manager.db import Topic
 from subscription_manager.db.topics import get_topic_by_id, get_topics, create_topic, update_topic, delete_topic
-from tests.auth.utils import make_user
-from tests.subscription_manager.utils import make_topic
+from tests.subscription_manager.utils import make_topic, make_user
 
 __author__ = "EUROCONTROL (SWIM)"
 

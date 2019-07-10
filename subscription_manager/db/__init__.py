@@ -30,4 +30,4 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 
 __author__ = "EUROCONTROL (SWIM)"
 
-from subscription_manager.db.models import Topic, Subscription
+from subscription_manager.db.models import Topic, Subscription, User
