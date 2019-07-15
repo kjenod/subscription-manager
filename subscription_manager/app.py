@@ -27,7 +27,6 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-import os
 from pathlib import Path
 
 import connexion
@@ -37,12 +36,10 @@ from pkg_resources import resource_filename
 from swim_backend.flask import configure_flask
 from swim_backend.config import configure_logging, load_app_config
 from swim_backend.db import db
-from data.init_db import init_db
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-# TODO: add flask migrate for initial data
 # TODO: fix typing hints
 
 
@@ -54,7 +51,7 @@ def create_app(config_file):
 
     app = connexion_app.app
 
-    app_config = load_app_config(package=__name__, filename=config_file)
+    app_config = load_app_config(filename=config_file)
 
     app.config.update(app_config)
 
@@ -70,16 +67,12 @@ def create_app(config_file):
 def _configure_db(db, app):
 
     with app.app_context():
-
         db.init_app(app)
         db.create_all()
 
-        # initialize db with users
-        if not app.config['TESTING']:
-            init_db()
-
 
 if __name__ == '__main__':
-    config_file = resource_filename(__name__, 'dev_config.yml')
+    config_file = resource_filename(__name__, 'config.yml')
     app = create_app(config_file)
+
     app.run(host="0.0.0.0", port=8080, debug=False)

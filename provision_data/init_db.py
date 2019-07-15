@@ -30,9 +30,11 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import logging
 import os
 
+from pkg_resources import resource_filename
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import generate_password_hash
 
+from subscription_manager.app import create_app
 from subscription_manager.db.models import User
 from swim_backend.db import db_save, db
 
@@ -58,23 +60,34 @@ def _user_exists(user):
 
 
 def init_db():
-    admin = User(username=os.environ['SM_ADMIN_USERNAME'],
-                 password=generate_password_hash(os.environ['SM_ADMIN_PASSWORD']),
-                 active=True,
-                 is_admin=True)
-    if not _user_exists(admin):
-        _save(admin)
+    config_file = resource_filename(__name__, 'config.yml')
+    app = create_app(config_file)
 
-    adsb = User(username=os.environ['SWIM_ADSB_USERNAME'],
-                password=generate_password_hash(os.environ['SWIM_ADSB_PASSWORD']),
-                active=True,
-                is_admin=True)
-    if not _user_exists(adsb):
-        _save(adsb)
+    with app.app_context():
+        admin = User(username=os.environ['SM_ADMIN_USERNAME'],
+                     password=generate_password_hash(os.environ['SM_ADMIN_PASSWORD']),
+                     active=True,
+                     is_admin=True)
+        if not _user_exists(admin):
+            _logger.info('Saving admin user')
+            _save(admin)
 
-    explorer = User(username=os.environ['SWIM_EXPLORER_USERNAME'],
-                    password=generate_password_hash(os.environ['SWIM_EXPLORER_PASSWORD']),
+        adsb = User(username=os.environ['SWIM_ADSB_USERNAME'],
+                    password=generate_password_hash(os.environ['SWIM_ADSB_PASSWORD']),
                     active=True,
                     is_admin=True)
-    if not _user_exists(explorer):
-        _save(explorer)
+        if not _user_exists(adsb):
+            _logger.info('Saving swim-adsb user')
+            _save(adsb)
+
+        explorer = User(username=os.environ['SWIM_EXPLORER_USERNAME'],
+                        password=generate_password_hash(os.environ['SWIM_EXPLORER_PASSWORD']),
+                        active=True,
+                        is_admin=True)
+        if not _user_exists(explorer):
+            _logger.info('Saving swim-explorer user')
+            _save(explorer)
+
+
+if __name__ == '__main__':
+    init_db()
