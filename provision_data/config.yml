@@ -1,0 +1,40 @@
+LOGGING:
+  version: 1
+
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: default
+      level: DEBUG
+
+  formatters:
+    default:
+      format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+      class: logging.Formatter
+
+  disable_existing_loggers: false
+
+  root:
+    level: DEBUG
+    handlers: [console]
+
+  loggers:
+    requests:
+      level: INFO
+
+    openapi_spec_validator:
+      level: INFO
+
+    connexion:
+      level: INFO
+
+
+SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://swim:swim@localhost:5432/smdb'
+SQLALCHEMY_TRACK_MODIFICATIONS: false  # silence the deprecation warning
+
+BROKER:
+  host: 'localhost:15671'
+  https: True
+  username: 'guest'
+  password: 'guest'
+  cert_path: '/secrets/ca_certificate.pem'
