@@ -276,7 +276,7 @@ def test_post_subscription__invalid_topic_id__returns_400(test_client, test_user
     assert 400 == response.status_code
 
     response_data = json.loads(response.data)
-    assert f"'topic_id': ['there is no topic with id 1234']" == response_data['detail']
+    assert "{'topic_id': ['there is no topic with id 1234']}" == response_data['detail']
 
 
 @mock.patch('subscription_manager.db.subscriptions.create_subscription', side_effect=SQLAlchemyError(None, None, None))
@@ -428,7 +428,7 @@ def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_s
     assert 400 == response.status_code
 
     response_data = json.loads(response.data)
-    assert f"'topic_id': ['there is no topic with id 1234']" == response_data['detail']
+    assert "{'topic_id': ['there is no topic with id 1234']}" == response_data['detail']
 
 
 @mock.patch('subscription_manager.broker.broker.delete_queue_binding', return_value=None)

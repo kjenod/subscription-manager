@@ -40,7 +40,7 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 class BaseOpts(ModelSchemaOpts):
-    def __init__(self, meta):
+    def __init__(self, meta, ordered):
         if not hasattr(meta, 'sql_session'):
                 meta.sqla_session = db.session
         if not hasattr(meta, 'include_fk'):
@@ -81,8 +81,10 @@ class SubscriptionSchema(BaseSchema):
     topic = Nested(TopicSchema)
 
     @post_dump
-    def serialize_qos(self, subscription_data):
+    def serialize_qos(self, subscription_data, **kwargs):
         subscription_data['qos'] = subscription_data['qos'].value
+
+        return subscription_data
 
 
 class UserSchema(BaseSchema):

@@ -36,7 +36,7 @@ from sqlalchemy.exc import IntegrityError
 from swim_backend.auth import admin_required, hash_password
 from swim_backend.db import property_has_changed
 from swim_backend.errors import NotFoundError, ConflictError, BadRequestError
-from swim_backend.marshal import marshal_with, unmarshal
+from swim_backend.marshal import marshal_with
 from swim_backend.typing import JSONType
 from subscription_manager.db import users as user_service
 from subscription_manager.db.models import User
@@ -93,7 +93,7 @@ def post_user() -> t.Tuple[JSONType, int]:
     """
 
     try:
-        user = unmarshal(UserSchema, request.get_json())
+        user = UserSchema().load(data=request.get_json())
     except ValidationError as e:
         raise BadRequestError(str(e))
 
@@ -126,7 +126,7 @@ def put_user(user_id: int) -> JSONType:
         raise NotFoundError(f"User with id {user_id} does not exist")
 
     try:
-        user = unmarshal(UserSchema, request.get_json(), instance=user, partial=True)
+        user = UserSchema().load(data=request.get_json(), instance=user, partial=True)
     except ValidationError as e:
         raise BadRequestError(str(e))
 

@@ -31,13 +31,13 @@ import typing as t
 
 from flask import request
 from marshmallow import ValidationError
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from swim_backend.errors import NotFoundError, ConflictError, BadRequestError, APIError
+from sqlalchemy.exc import SQLAlchemyError
+from swim_backend.errors import NotFoundError, ConflictError, BadRequestError
 from swim_backend.typing import JSONType
 from subscription_manager.db import topics as db
 from subscription_manager.db.utils import is_duplicate_record_error
 from subscription_manager.endpoints.schemas import TopicSchema
-from swim_backend.marshal import unmarshal, marshal_with
+from swim_backend.marshal import marshal_with
 from subscription_manager.events import events
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -89,7 +89,7 @@ def post_topic() -> t.Tuple[JSONType, int]:
     """
 
     try:
-        topic = unmarshal(TopicSchema, request.get_json())
+        topic = TopicSchema().load(request.get_json())
         topic.user_id = request.user.id
 
         events.create_topic_event(topic)
