@@ -1,4 +1,4 @@
-FROM swim-base
+FROM swim-base.conda
 
 LABEL maintainer="SWIM EUROCONTROL <http://www.eurocontrol.int>"
 

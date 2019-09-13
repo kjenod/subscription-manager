@@ -75,7 +75,7 @@ def init_db():
         adsb = User(username=os.environ['SWIM_ADSB_USERNAME'],
                     password=generate_password_hash(os.environ['SWIM_ADSB_PASSWORD']),
                     active=True,
-                    is_admin=True)
+                    is_admin=False)
         if not _user_exists(adsb):
             _logger.info('Saving swim-adsb user')
             _save(adsb)
@@ -83,7 +83,7 @@ def init_db():
         explorer = User(username=os.environ['SWIM_EXPLORER_USERNAME'],
                         password=generate_password_hash(os.environ['SWIM_EXPLORER_PASSWORD']),
                         active=True,
-                        is_admin=True)
+                        is_admin=False)
         if not _user_exists(explorer):
             _logger.info('Saving swim-explorer user')
             _save(explorer)
