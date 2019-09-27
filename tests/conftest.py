@@ -37,7 +37,7 @@ from swim_backend.db import db as _db, db_save
 from tests.subscription_manager.utils import make_user
 from tests.subscription_manager.utils import make_basic_auth_header
 
-DEFAULT_LOGIN_PASSWORD = 'password'
+DEFAULT_LOGIN_PASS = 'password'
 
 
 @pytest.yield_fixture(scope='session')
@@ -86,15 +86,15 @@ def session(db):
 
 @pytest.fixture(scope='function')
 def test_user(session):
-    user = make_user(uuid4().hex, DEFAULT_LOGIN_PASSWORD)
+    user = make_user(uuid4().hex, DEFAULT_LOGIN_PASS)
     return db_save(session, user)
 
 
 @pytest.fixture(scope='function')
 def test_admin_user(session):
-    user = make_user(uuid4().hex, DEFAULT_LOGIN_PASSWORD, is_admin=True)
+    user = make_user(uuid4().hex, DEFAULT_LOGIN_PASS, is_admin=True)
     return db_save(session, user)
 
 
 def basic_auth_header(user):
-    return make_basic_auth_header(user.username, DEFAULT_LOGIN_PASSWORD)
+    return make_basic_auth_header(user.username, DEFAULT_LOGIN_PASS)

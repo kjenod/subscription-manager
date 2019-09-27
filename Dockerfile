@@ -11,7 +11,7 @@ COPY requirements.yml requirements.yml
 RUN conda env create --name app -f requirements.yml
 
 COPY ./subscription_manager/ ./subscription_manager/
-COPY ./provision_data/ ./provision_data/
+COPY ./provision ./provision/
 
 COPY . /source/
 RUN set -x \

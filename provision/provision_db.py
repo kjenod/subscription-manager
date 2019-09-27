@@ -64,24 +64,24 @@ def init_db():
     app = create_app(config_file)
 
     with app.app_context():
-        admin = User(username=os.environ['SM_ADMIN_USERNAME'],
-                     password=generate_password_hash(os.environ['SM_ADMIN_PASSWORD']),
+        admin = User(username=os.environ['SM_ADMIN_USER'],
+                     password=generate_password_hash(os.environ['SM_ADMIN_PASS']),
                      active=True,
                      is_admin=True)
         if not _user_exists(admin):
             _logger.info('Saving admin user')
             _save(admin)
 
-        adsb = User(username=os.environ['SWIM_ADSB_USERNAME'],
-                    password=generate_password_hash(os.environ['SWIM_ADSB_PASSWORD']),
+        adsb = User(username=os.environ['SWIM_ADSB_USER'],
+                    password=generate_password_hash(os.environ['SWIM_ADSB_PASS']),
                     active=True,
                     is_admin=False)
         if not _user_exists(adsb):
             _logger.info('Saving swim-adsb user')
             _save(adsb)
 
-        explorer = User(username=os.environ['SWIM_EXPLORER_USERNAME'],
-                        password=generate_password_hash(os.environ['SWIM_EXPLORER_PASSWORD']),
+        explorer = User(username=os.environ['SWIM_EXPLORER_USER'],
+                        password=generate_password_hash(os.environ['SWIM_EXPLORER_PASS']),
                         active=True,
                         is_admin=False)
         if not _user_exists(explorer):

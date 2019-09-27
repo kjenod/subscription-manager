@@ -39,7 +39,7 @@ from subscription_manager.broker import broker
 from subscription_manager.broker.broker import BrokerError
 from subscription_manager.db.models import QOS
 from subscription_manager.db.subscriptions import get_subscription_by_id
-from tests.conftest import DEFAULT_LOGIN_PASSWORD, basic_auth_header
+from tests.conftest import DEFAULT_LOGIN_PASS, basic_auth_header
 from tests.subscription_manager.utils import make_subscription, make_topic, make_user, \
     make_basic_auth_header
 
@@ -86,8 +86,8 @@ def test_get_subscription__subscription_does_not_exist__returns_404(test_client,
 
 def test_get_subscription__user_tries_to_get_subscription_of_another_user__returns_404(test_client, generate_user,
                                                                                        generate_subscription):
-    user1 = generate_user('username1', DEFAULT_LOGIN_PASSWORD)
-    user2 = generate_user('username2', DEFAULT_LOGIN_PASSWORD)
+    user1 = generate_user('username1', DEFAULT_LOGIN_PASS)
+    user2 = generate_user('username2', DEFAULT_LOGIN_PASS)
     subscription = generate_subscription(user=user1)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
@@ -148,8 +148,8 @@ def test_get_subscription__subscription_exists_and_its_data_is_returned(test_cli
 
 def test_get_subscriptions__no_subscription_exists_for_user__empty_list_is_returned(test_client, generate_user,
                                                                                     generate_subscription):
-    user1 = generate_user('username1', DEFAULT_LOGIN_PASSWORD)
-    user2 = generate_user('username2', DEFAULT_LOGIN_PASSWORD)
+    user1 = generate_user('username1', DEFAULT_LOGIN_PASS)
+    user2 = generate_user('username2', DEFAULT_LOGIN_PASS)
     generate_subscription(user=user1)
 
     url = f'{BASE_PATH}/subscriptions/'
@@ -492,7 +492,7 @@ def test_put_subscription__admin_user_can_update_any_subscription(test_client, t
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
     response = test_client.put(url, data=json.dumps(subscription_data), content_type='application/json',
-                               headers=make_basic_auth_header(test_admin_user.username, DEFAULT_LOGIN_PASSWORD))
+                               headers=make_basic_auth_header(test_admin_user.username, DEFAULT_LOGIN_PASS))
 
     assert 200 == response.status_code
 

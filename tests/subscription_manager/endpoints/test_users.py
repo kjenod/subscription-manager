@@ -39,7 +39,7 @@ from swim_backend.auth import HASH_METHOD
 from swim_backend.db import db_save
 from subscription_manager.db.users import get_user_by_id
 from tests.subscription_manager.utils import make_user, make_basic_auth_header
-from tests.conftest import DEFAULT_LOGIN_PASSWORD
+from tests.conftest import DEFAULT_LOGIN_PASS
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -54,7 +54,7 @@ def generate_user(session):
 
 
 def basic_auth_header(user):
-    return make_basic_auth_header(user.username, DEFAULT_LOGIN_PASSWORD)
+    return make_basic_auth_header(user.username, DEFAULT_LOGIN_PASS)
 
 
 def test_get_user__user_does_not_exist__returns_404(test_client, test_admin_user):

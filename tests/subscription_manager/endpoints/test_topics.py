@@ -37,7 +37,7 @@ from swim_backend.db import db_save
 from subscription_manager import BASE_PATH
 from subscription_manager.broker import broker
 from subscription_manager.db.topics import get_topic_by_id
-from tests.conftest import DEFAULT_LOGIN_PASSWORD, basic_auth_header
+from tests.conftest import DEFAULT_LOGIN_PASS, basic_auth_header
 from tests.subscription_manager.utils import make_topic, make_subscription, make_user, \
     make_basic_auth_header
 
@@ -171,8 +171,8 @@ def test_get_topics_own__topics_exist_and_are_returned_as_list(test_client, gene
 
 
 def test_get_topics__no_topic_exists_for_user__empty_list_is_returned(test_client, generate_user, generate_topic):
-    user1 = generate_user('username1', DEFAULT_LOGIN_PASSWORD)
-    user2 = generate_user('username2', DEFAULT_LOGIN_PASSWORD)
+    user1 = generate_user('username1', DEFAULT_LOGIN_PASS)
+    user2 = generate_user('username2', DEFAULT_LOGIN_PASS)
     generate_topic('test_topic', user=user1)
 
     url = f'{BASE_PATH}/topics/own'
