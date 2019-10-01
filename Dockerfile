@@ -3,6 +3,7 @@ FROM swim-base.conda
 LABEL maintainer="SWIM EUROCONTROL <http://www.eurocontrol.int>"
 
 ENV PATH="/opt/conda/envs/app/bin:$PATH"
+ENV DB_NAME='smdb'
 
 RUN mkdir -p /app
 WORKDIR /app

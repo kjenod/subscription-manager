@@ -72,7 +72,7 @@ def init_db():
             _logger.info('Saving admin user')
             _save(admin)
 
-        adsb = User(username=os.environ['SWIM_ADSB_USER'],
+        adsb = User(username=os.environ['SWIM_ADSB_SM_USER'],
                     password=generate_password_hash(os.environ['SWIM_ADSB_PASS']),
                     active=True,
                     is_admin=False)
@@ -80,7 +80,7 @@ def init_db():
             _logger.info('Saving swim-adsb user')
             _save(adsb)
 
-        explorer = User(username=os.environ['SWIM_EXPLORER_USER'],
+        explorer = User(username=os.environ['SWIM_EXPLORER_SM_USER'],
                         password=generate_password_hash(os.environ['SWIM_EXPLORER_PASS']),
                         active=True,
                         is_admin=False)

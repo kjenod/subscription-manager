@@ -50,11 +50,6 @@ BROKER_USERS = [
         'tags': ['management']
     },
     {
-        'prefix': 'SWIM_ADSB_BROKER',
-        'permissions': RabbitMQUserPermissions(configure=".*", write=".*", read=""),
-        'tags': []
-    },
-    {
         'prefix': 'SWIM_EXPLORER_BROKER',
         'permissions': RabbitMQUserPermissions(configure=".*", write="", read=".*"),
         'tags': []
