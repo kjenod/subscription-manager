@@ -19,7 +19,7 @@ dependencies:
   - markupsafe=1.1.1=py37h7b6447c_0
   - more-itertools=7.2.0=py37_0
   - ncurses=6.1=he6710b0_1
-  - openssl=1.1.1d=h7b6447c_1
+  - openssl=1.1.1d=h7b6447c_2
   - packaging=19.2=py_0
   - pip=19.2.3=py37_0
   - pluggy=0.13.0=py37_0
@@ -42,7 +42,7 @@ dependencies:
   - zlib=1.2.11=h7b6447c_3
   - pip:
     - alembic==1.2.1
-    - broker-rest-client==0.0.6
+    - broker-rest-client==0.0.7
     - chardet==3.0.4
     - clickclick==1.2.2
     - connexion==2.3.0
@@ -52,7 +52,7 @@ dependencies:
     - inflection==0.3.1
     - jsonschema==2.6.0
     - mako==1.1.0
-    - marshmallow==3.2.0
+    - marshmallow==3.2.1
     - marshmallow-sqlalchemy==0.19.0
     - openapi-spec-validator==0.2.8
     - psycopg2-binary==2.8.3
