@@ -340,7 +340,10 @@ def test_post_subscription__unauthorized_user__returns_401(test_client, generate
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_post_subscription__subscription_is_saved_in_db(test_client, generate_topic, test_user):
+@mock.patch('subscription_manager.broker.broker.broker_client')
+def test_post_subscription__subscription_is_saved_in_db(mock_broker_client, test_client, generate_topic, test_user):
+    mock_broker_client.create_queue_for_topic = mock.Mock(return_value=None)
+
     topic = generate_topic('test_topic')
 
     subscription_data = {
@@ -483,8 +486,12 @@ def test_put_subscription__unauthorized_user_returns_401(test_client, generate_s
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_put_subscription__admin_user_can_update_any_subscription(test_client, test_user, test_admin_user,
-                                                                  generate_subscription):
+@mock.patch('subscription_manager.broker.broker.broker_client')
+def test_put_subscription__admin_user_can_update_any_subscription(mock_broker_client, test_client, test_user,
+                                                                  test_admin_user, generate_subscription):
+    mock_broker_client.bind_queue_to_topic = mock.Mock(return_value=None)
+    mock_broker_client.delete_queue_binding = mock.Mock(return_value=None)
+
     subscription = generate_subscription(user=test_user, with_broker_queue=True)
 
     subscription_data = {'active': not subscription.active}
@@ -506,7 +513,12 @@ def test_put_subscription__admin_user_can_update_any_subscription(test_client, t
     broker.delete_queue(subscription.queue)
 
 
-def test_put_subscription__subscription_is_updated_in_db_and_broker(test_client, generate_subscription, test_user):
+@mock.patch('subscription_manager.broker.broker.broker_client')
+def test_put_subscription__subscription_is_updated_in_db_and_broker(mock_broker_client, test_client,
+                                                                    generate_subscription, test_user):
+    mock_broker_client.bind_queue_to_topic = mock.Mock(return_value=None)
+    mock_broker_client.delete_queue_binding = mock.Mock(return_value=None)
+
     subscription = generate_subscription(user=test_user, with_broker_queue=True)
 
     subscription_data = {'active': not subscription.active}
@@ -549,9 +561,11 @@ def test_delete_subscription__unauthorized_user__returns_401(test_client, genera
     response_data = json.loads(response.data)
     assert 'Invalid credentials' == response_data['detail']
 
+@mock.patch('subscription_manager.broker.broker.broker_client')
+def test_delete_subscription__admin_user_can_delete_any_subscription(mock_broker_client, test_client, test_user,
+                                                                     test_admin_user, generate_subscription):
+    mock_broker_client.delete_queue_binding = mock.Mock(return_value=None)
 
-def test_delete_subscription__admin_user_can_delete_any_subscription(test_client, test_user, test_admin_user,
-                                                                     generate_subscription):
     subscription = generate_subscription(user=test_user, with_broker_queue=True)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
@@ -564,11 +578,12 @@ def test_delete_subscription__admin_user_can_delete_any_subscription(test_client
     response = test_client.get(url, headers=basic_auth_header(test_user))
     assert 404 == response.status_code
 
-    # check that the queue has been deleted form the broker
-    assert broker.get_queue(subscription.queue) is None
 
+@mock.patch('subscription_manager.broker.broker.broker_client')
+def test_delete_subscription__subscription_is_deleted_and_returns_204(mock_broker_client, test_client,
+                                                                      generate_subscription, test_user):
+    mock_broker_client.delete_queue_binding = mock.Mock(return_value=None)
 
-def test_delete_subscription__subscription_is_deleted_and_returns_204(test_client, generate_subscription, test_user):
     subscription = generate_subscription(user=test_user, with_broker_queue=True)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
@@ -580,6 +595,3 @@ def test_delete_subscription__subscription_is_deleted_and_returns_204(test_clien
     # check that the subscription has been deleted from db
     response = test_client.get(url, headers=basic_auth_header(test_user))
     assert 404 == response.status_code
-
-    # check that the queue has been deleted form the broker
-    assert broker.get_queue(subscription.queue) is None

@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from base64 import b64encode
 from uuid import uuid4
 
-from swim_backend.auth import hash_password
+from swim_backend.auth.auth import hash_password
 from subscription_manager.db import Topic, Subscription, User
 
 __author__ = "EUROCONTROL (SWIM)"

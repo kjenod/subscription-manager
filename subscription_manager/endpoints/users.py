@@ -33,7 +33,8 @@ from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from swim_backend.auth import admin_required, hash_password
+from swim_backend.auth.auth import admin_required, hash_password
+from swim_backend.auth import passwords
 from swim_backend.db import property_has_changed
 from swim_backend.errors import NotFoundError, ConflictError, BadRequestError
 from swim_backend.marshal import marshal_with
@@ -97,6 +98,9 @@ def post_user() -> t.Tuple[JSONType, int]:
     except ValidationError as e:
         raise BadRequestError(str(e))
 
+    if not passwords.is_strong(user.password):
+        raise BadRequestError('password is not strong enough')
+
     # hash password before saving in DB
     user.password = hash_password(user.password)
 
@@ -132,6 +136,10 @@ def put_user(user_id: int) -> JSONType:
 
     # in case the user has provided a new password then it needs to be hashed
     if _password_has_changed(user):
+
+        if not passwords.is_strong(user.password):
+            raise BadRequestError('password is not strong enough')
+
         user.password = hash_password(user.password)
 
     try:

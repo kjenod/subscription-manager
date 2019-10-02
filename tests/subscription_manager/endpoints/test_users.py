@@ -35,7 +35,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash
 
 from subscription_manager import BASE_PATH
-from swim_backend.auth import HASH_METHOD
+from swim_backend.auth.auth import HASH_METHOD
 from swim_backend.db import db_save
 from subscription_manager.db.users import get_user_by_id
 from tests.subscription_manager.utils import make_user, make_basic_auth_header
@@ -167,8 +167,28 @@ def test_post_user__missing_required_property__returns_400(test_client, missing_
     assert f"'{missing_property}' is a required property" == response_data['detail']
 
 
+@mock.patch('swim_backend.auth.passwords.is_strong', return_value=False)
+def test_post_user__password_is_not_strong_enough__returns_400(mock_password_is_strong, test_client,  test_admin_user):
+    user_data = {
+        'username': 'username',
+        'password': 'password'
+    }
+
+    url = f'{BASE_PATH}/users/'
+
+    response = test_client.post(url, data=json.dumps(user_data), content_type='application/json',
+                                headers=basic_auth_header(test_admin_user))
+
+    assert 400 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert f"password is not strong enough" == response_data['detail']
+
+
 @mock.patch('subscription_manager.db.users.save_user', side_effect=IntegrityError(None, None, None))
-def test_post_user__db_error__returns_409(mock_create_user, test_client, generate_user, test_admin_user):
+@mock.patch('swim_backend.auth.passwords.is_strong', return_value=True)
+def test_post_user__db_error__returns_409(mock_password_is_strong, mock_create_user, test_client, generate_user,
+                                          test_admin_user):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -218,7 +238,8 @@ def test_post_user__non_admin_user__returns_403(test_client, test_user):
     assert 'Admin rights required' == response_data['detail']
 
 
-def test_post_user__user_is_saved_in_db(test_client, test_admin_user):
+@mock.patch('swim_backend.auth.passwords.is_strong', return_value=True)
+def test_post_user__user_is_saved_in_db(mock_password_is_strong, test_client, test_admin_user):
     user_data = {
         'username': 'username',
         'password': 'password'
@@ -244,7 +265,9 @@ def test_post_user__user_is_saved_in_db(test_client, test_admin_user):
 
 
 @mock.patch('subscription_manager.db.users.save_user', side_effect=IntegrityError(None, None, None))
-def test_put_user__db_error__returns_409(mock_update_user, test_client, generate_user, test_admin_user):
+@mock.patch('swim_backend.auth.passwords.is_strong', return_value=True)
+def test_put_user__db_error__returns_409(mock_password_is_strong, mock_update_user, test_client, generate_user,
+                                         test_admin_user):
     user = generate_user()
 
     user_data = {
@@ -297,6 +320,26 @@ def test_put_user__unauthorized_user__returns_401(test_client, generate_user):
     assert 'Invalid credentials' == response_data['detail']
 
 
+@mock.patch('swim_backend.auth.passwords.is_strong', return_value=False)
+def test_put_user__update_password__password_not_strong_enough__returns_400(mock_password_is_strong, test_client,
+                                                                            generate_user, test_admin_user):
+    user = generate_user()
+
+    user_data = {
+        'password': 'new password',
+    }
+
+    url = f'{BASE_PATH}/users/{user.id}'
+
+    response = test_client.put(url, data=json.dumps(user_data), content_type='application/json',
+                               headers=basic_auth_header(test_admin_user))
+
+    assert 400 == response.status_code
+
+    response_data = json.loads(response.data)
+    assert 'password is not strong enough' == response_data['detail']
+
+
 def test_put_user__non_admin_user__returns_403(test_client, generate_user, test_user):
     user = generate_user()
 
@@ -336,7 +379,9 @@ def test_put_user__user_is_updated(test_client, generate_user, test_admin_user):
     assert user_data['username'] == db_user.username
 
 
-def test_put_user__new_password_is_updated_and_hashed_correctly(test_client, generate_user, test_admin_user):
+@mock.patch('swim_backend.auth.passwords.is_strong', return_value=True)
+def test_put_user__new_password_is_updated_and_hashed_correctly(mock_password_is_strong, test_client, generate_user,
+                                                                test_admin_user):
     user = generate_user()
 
     user_data = {

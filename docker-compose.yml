@@ -20,5 +20,5 @@ services:
       - "5672:5672"
       - "1883:1883"
       - "8883:8883"
-    volumes:
-      - ${CERTS_DIR}:/certs/
+#    volumes:
+#      - ${CERTS_DIR}:/certs/
