@@ -29,8 +29,12 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 import logging
 import os
+import time
+from typing import Callable, Optional
 
+from psycopg2 import errorcodes
 from pkg_resources import resource_filename
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import generate_password_hash
 
@@ -63,31 +67,49 @@ def init_db():
     config_file = resource_filename(__name__, 'config.yml')
     app = create_app(config_file)
 
+    users = [
+        User(username=os.environ['SM_ADMIN_USER'],
+             password=generate_password_hash(os.environ['SM_ADMIN_PASS']),
+             active=True,
+             is_admin=True),
+        User(username=os.environ['SWIM_ADSB_SM_USER'],
+             password=generate_password_hash(os.environ['SWIM_ADSB_PASS']),
+             active=True,
+             is_admin=False),
+        User(username=os.environ['SWIM_EXPLORER_SM_USER'],
+             password=generate_password_hash(os.environ['SWIM_EXPLORER_PASS']),
+             active=True,
+             is_admin=False)
+    ]
+
     with app.app_context():
-        admin = User(username=os.environ['SM_ADMIN_USER'],
-                     password=generate_password_hash(os.environ['SM_ADMIN_PASS']),
-                     active=True,
-                     is_admin=True)
-        if not _user_exists(admin):
-            _logger.info('Saving admin user')
-            _save(admin)
+        for user in users:
+                if _user_exists(user):
+                    _logger.info(f"User {user.username} already exists. Skipping...")
+                    continue
+                _save(user)
+                _logger.info(f'User {user.username} saved successully in DB')
 
-        adsb = User(username=os.environ['SWIM_ADSB_SM_USER'],
-                    password=generate_password_hash(os.environ['SWIM_ADSB_PASS']),
-                    active=True,
-                    is_admin=False)
-        if not _user_exists(adsb):
-            _logger.info('Saving swim-adsb user')
-            _save(adsb)
 
-        explorer = User(username=os.environ['SWIM_EXPLORER_SM_USER'],
-                        password=generate_password_hash(os.environ['SWIM_EXPLORER_PASS']),
-                        active=True,
-                        is_admin=False)
-        if not _user_exists(explorer):
-            _logger.info('Saving swim-explorer user')
-            _save(explorer)
+def db_operation(func: Callable, retry: int, delay: Optional[int] = 1):
+    """
+
+    :param func:
+    :param retry:
+    :param delay:
+    :return:
+    """
+    try:
+        func()
+    except OperationalError as e:
+        retry -= 1
+        if retry < 0:
+            _logger.info(f'Max retries reached. Failed because: {str(e)}')
+            return
+        _logger.info(f'DB error occurred. Retrying in {delay} seconds...')
+        time.sleep(delay)
+        db_operation(func, retry, delay * 2)
 
 
 if __name__ == '__main__':
-    init_db()
+    db_operation(init_db, retry=5)
