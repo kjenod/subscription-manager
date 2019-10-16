@@ -73,11 +73,11 @@ def init_db():
              active=True,
              is_admin=True),
         User(username=os.environ['SWIM_ADSB_SM_USER'],
-             password=generate_password_hash(os.environ['SWIM_ADSB_PASS']),
+             password=generate_password_hash(os.environ['SWIM_ADSB_SM_PASS']),
              active=True,
              is_admin=False),
         User(username=os.environ['SWIM_EXPLORER_SM_USER'],
-             password=generate_password_hash(os.environ['SWIM_EXPLORER_PASS']),
+             password=generate_password_hash(os.environ['SWIM_EXPLORER_SM_PASS']),
              active=True,
              is_admin=False)
     ]
