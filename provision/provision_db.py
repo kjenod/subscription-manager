@@ -31,7 +31,7 @@ import logging
 import os
 import time
 from functools import partial
-from typing import Callable, Optional, List, Dict, Any
+from typing import Callable, Optional, List
 
 from pkg_resources import resource_filename
 from sqlalchemy.exc import OperationalError
@@ -81,9 +81,7 @@ def _get_users():
     ]
 
 
-def provision_db_with_users(config_file: str):
-    users = _get_users()
-
+def provision_db_with_users(config_file: str, users: List[User]):
     app = create_app(config_file)
 
     with app.app_context():
@@ -108,6 +106,7 @@ def db_operation(func: Callable, retry: int, delay: Optional[int] = 0.1):
         if retry <= 0:
             _logger.error(f'Max retries reached. Exiting...')
             return
+        _logger.info(f"Retrying in {delay}")
         time.sleep(delay)
         db_operation(func, retry - 1, delay * 2)
 
@@ -118,8 +117,7 @@ if __name__ == '__main__':
     # load config because we need the DB_PROVISION_RETRY variable
     config = load_config(config_file)
 
-    _logger.info("Waiting for DB...")
     db_operation(
-        func=partial(provision_db_with_users, config_file=config_file),
+        func=partial(provision_db_with_users, config_file=config_file, users=_get_users()),
         retry=config['DB_PROVISION_RETRY']
     )

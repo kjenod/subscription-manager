@@ -75,7 +75,6 @@ def main():
 
     client = _get_rabbitmq_rest_client(config['BROKER'])
 
-    _logger.info("Waiting for Broker...")
     for user in BROKER_USERS:
         name = os.environ.get(user['prefix'] + '_USER')
         password = os.environ.get(user['prefix'] + '_PASS')
