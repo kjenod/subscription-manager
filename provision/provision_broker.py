@@ -31,12 +31,12 @@ import logging
 import logging.config
 import os
 
-import yaml
-
 from broker_rest_client.models import RabbitMQUserPermissions
 from broker_rest_client.rabbitmq_rest_client import RabbitMQRestClient
 from pkg_resources import resource_filename
 from rest_client.errors import APIError
+
+from provision.utils import load_config
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -57,18 +57,6 @@ BROKER_USERS = [
 ]
 
 
-def _load_config(filename: str):
-    """
-
-    :param filename:
-    :return:
-    """
-    with open(filename) as f:
-        obj = yaml.load(f, Loader=yaml.FullLoader)
-
-    return obj or None
-
-
 def _get_rabbitmq_rest_client(config):
     return RabbitMQRestClient.create(
         host=config['host'],
@@ -81,7 +69,7 @@ def _get_rabbitmq_rest_client(config):
 
 
 def main():
-    config = _load_config(resource_filename(__name__, 'config.yml'))
+    config = load_config(resource_filename(__name__, 'config.yml'))
 
     logging.config.dictConfig(config['LOGGING'])
 

@@ -31,13 +31,14 @@ import logging
 import os
 import time
 from functools import partial
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, Dict, Any
 
 from pkg_resources import resource_filename
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.security import generate_password_hash
 
+from provision.utils import load_config
 from subscription_manager.app import create_app
 from subscription_manager.db.models import User
 from swim_backend.db import db_save, db
@@ -63,7 +64,28 @@ def _user_exists(user):
     return True
 
 
-def provision_db_with_users(app, users: List[User]):
+def _get_users():
+    return [
+        User(username=os.environ['SM_ADMIN_USER'],
+             password=generate_password_hash(os.environ['SM_ADMIN_PASS']),
+             active=True,
+             is_admin=True),
+        User(username=os.environ['SWIM_ADSB_SM_USER'],
+             password=generate_password_hash(os.environ['SWIM_ADSB_SM_PASS']),
+             active=True,
+             is_admin=False),
+        User(username=os.environ['SWIM_EXPLORER_SM_USER'],
+             password=generate_password_hash(os.environ['SWIM_EXPLORER_SM_PASS']),
+             active=True,
+             is_admin=False)
+    ]
+
+
+def provision_db_with_users(config_file: str):
+    users = _get_users()
+
+    app = create_app(config_file)
+
     with app.app_context():
         for user in users:
             if _user_exists(user):
@@ -92,25 +114,12 @@ def db_operation(func: Callable, retry: int, delay: Optional[int] = 0.1):
 
 if __name__ == '__main__':
     config_file = resource_filename(__name__, 'config.yml')
-    app = create_app(config_file)
 
-    users = [
-        User(username=os.environ['SM_ADMIN_USER'],
-             password=generate_password_hash(os.environ['SM_ADMIN_PASS']),
-             active=True,
-             is_admin=True),
-        User(username=os.environ['SWIM_ADSB_SM_USER'],
-             password=generate_password_hash(os.environ['SWIM_ADSB_SM_PASS']),
-             active=True,
-             is_admin=False),
-        User(username=os.environ['SWIM_EXPLORER_SM_USER'],
-             password=generate_password_hash(os.environ['SWIM_EXPLORER_SM_PASS']),
-             active=True,
-             is_admin=False)
-    ]
+    # load config because we need the DB_PROVISION_RETRY variable
+    config = load_config(config_file)
 
     _logger.info("Waiting for DB...")
     db_operation(
-        func=partial(provision_db_with_users, app=app, users=users),
-        retry=app.config['DB_PROVISION_RETRY']
+        func=partial(provision_db_with_users, config_file=config_file),
+        retry=config['DB_PROVISION_RETRY']
     )
