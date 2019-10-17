@@ -97,7 +97,7 @@ def _apply_policies():
             apply_to="queues",
             definitions={'max-length': config['MAX_BROKER_QUEUE_LENGTH']}
         )
-        _logger.info(f"Policy 'max-queue-length' was successfully appplied in RabbitMQ")
+        _logger.info(f"Policy 'max-queue-length' was successfully applied in RabbitMQ")
     except APIError as e:
         _logger.error(f'Error while applying policy to RabbitMQ: {str(e)}')
 
