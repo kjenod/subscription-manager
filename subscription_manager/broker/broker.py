@@ -83,10 +83,9 @@ def get_queue(queue):
 
 
 def create_queue_for_topic(queue, topic):
-    max_queue_length = app.config['MAX_BROKER_QUEUE_LENGTH']
 
     try:
-        broker_client.create_queue(name=queue, max_length=max_queue_length)
+        broker_client.create_queue(name=queue)
         broker_client.bind_queue_to_topic(queue=queue, topic='default', key=topic)
     except APIError as e:
         raise BrokerError(f"Error while creating queue {queue} for topic {topic}") from e

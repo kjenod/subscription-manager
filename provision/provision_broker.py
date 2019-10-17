@@ -68,13 +68,7 @@ def _get_rabbitmq_rest_client(config):
     )
 
 
-def main():
-    config = load_config(resource_filename(__name__, 'config.yml'))
-
-    logging.config.dictConfig(config['LOGGING'])
-
-    client = _get_rabbitmq_rest_client(config['BROKER'])
-
+def _add_users():
     for user in BROKER_USERS:
         name = os.environ.get(user['prefix'] + '_USER')
         password = os.environ.get(user['prefix'] + '_PASS')
@@ -94,5 +88,28 @@ def main():
             _logger.error(f'User {name} failed to be added in RabbitMQ: {str(e)}')
 
 
+def _apply_policies():
+    try:
+        client.create_policy(
+            name='max-queue-length',
+            pattern=".*",
+            priority=1,
+            apply_to="queues",
+            definitions={'max-length': config['MAX_BROKER_QUEUE_LENGTH']}
+        )
+    except APIError as e:
+        _logger.error(f'Error while applying policy to RabbitMQ: {str(e)}')
+
+
 if __name__ == '__main__':
-    main()
+    config = load_config(resource_filename(__name__, 'config.yml'))
+
+    logging.config.dictConfig(config['LOGGING'])
+
+    client = _get_rabbitmq_rest_client(config['BROKER'])
+
+    _logger.info(f"Adding users...")
+    _add_users()
+
+    _logger.info(f"Applying policies...")
+    _apply_policies()

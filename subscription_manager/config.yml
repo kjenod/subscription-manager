@@ -38,5 +38,3 @@ BROKER:
   username: 'guest'
   password: 'guest'
   cert_path: '/secrets/rabbitmq/ca_certificate.pem'
-
-MAX_BROKER_QUEUE_LENGTH: 10
