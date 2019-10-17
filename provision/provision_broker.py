@@ -76,7 +76,7 @@ def _get_rabbitmq_rest_client(config):
         username=config.get('username'),
         password=config.get('password'),
         verify=config.get('cert_path') or False,
-        retry=5
+        retry=config['retry']
     )
 
 
@@ -87,12 +87,13 @@ def main():
 
     client = _get_rabbitmq_rest_client(config['BROKER'])
 
+    _logger.info("Waiting for Broker...")
     for user in BROKER_USERS:
         name = os.environ.get(user['prefix'] + '_USER')
         password = os.environ.get(user['prefix'] + '_PASS')
 
         if name is None or password is None:
-            _logger.info(f"username or password not found for {user['prefix']}. Skipping...")
+            _logger.warning(f"username or password not found for {user['prefix']}. Skipping...")
             continue
 
         if client.user_exists(name):
@@ -103,7 +104,7 @@ def main():
             client.add_user(name, password, user['permissions'], user['tags'])
             _logger.info(f'User {name} was successfully added in RabbitMQ')
         except APIError as e:
-            _logger.info(f'User {name} failed to be added in RabbitMQ: {str(e)}')
+            _logger.error(f'User {name} failed to be added in RabbitMQ: {str(e)}')
 
 
 if __name__ == '__main__':

@@ -15,20 +15,14 @@ LOGGING:
   disable_existing_loggers: false
 
   root:
-    level: DEBUG
+    level: INFO
     handlers: [console]
 
   loggers:
     requests:
       level: INFO
 
-    openapi_spec_validator:
-      level: INFO
-
-    connexion:
-      level: INFO
-
-    provision_data:
+    urllib3:
       level: INFO
 
 
@@ -41,3 +35,6 @@ BROKER:
   username: ${BROKER_ADMIN_USER}
   password: ${BROKER_ADMIN_PASS}
   cert_path: '/secrets/rabbitmq/ca_certificate.pem'
+  retry: 10
+
+DB_PROVISION_RETRY: 10

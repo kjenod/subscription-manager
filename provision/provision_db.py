@@ -30,9 +30,9 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import logging
 import os
 import time
-from typing import Callable, Optional
+from functools import partial
+from typing import Callable, Optional, List
 
-from psycopg2 import errorcodes
 from pkg_resources import resource_filename
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.exc import NoResultFound
@@ -63,7 +63,34 @@ def _user_exists(user):
     return True
 
 
-def init_db():
+def provision_db_with_users(app, users: List[User]):
+    with app.app_context():
+        for user in users:
+            if _user_exists(user):
+                _logger.info(f"User {user.username} already exists. Skipping...")
+                continue
+            _save(user)
+            _logger.info(f'User {user.username} saved successfully in DB')
+
+
+def db_operation(func: Callable, retry: int, delay: Optional[int] = 0.1):
+    """
+    :param func:
+    :param retry:
+    :param delay:
+    :return:
+    """
+    try:
+        func()
+    except OperationalError:
+        if retry <= 0:
+            _logger.error(f'Max retries reached. Exiting...')
+            return
+        time.sleep(delay)
+        db_operation(func, retry - 1, delay * 2)
+
+
+if __name__ == '__main__':
     config_file = resource_filename(__name__, 'config.yml')
     app = create_app(config_file)
 
@@ -82,34 +109,8 @@ def init_db():
              is_admin=False)
     ]
 
-    with app.app_context():
-        for user in users:
-                if _user_exists(user):
-                    _logger.info(f"User {user.username} already exists. Skipping...")
-                    continue
-                _save(user)
-                _logger.info(f'User {user.username} saved successully in DB')
-
-
-def db_operation(func: Callable, retry: int, delay: Optional[int] = 1):
-    """
-
-    :param func:
-    :param retry:
-    :param delay:
-    :return:
-    """
-    try:
-        func()
-    except OperationalError as e:
-        retry -= 1
-        if retry < 0:
-            _logger.info(f'Max retries reached. Failed because: {str(e)}')
-            return
-        _logger.info(f'DB error occurred. Retrying in {delay} seconds...')
-        time.sleep(delay)
-        db_operation(func, retry, delay * 2)
-
-
-if __name__ == '__main__':
-    db_operation(init_db, retry=5)
+    _logger.info("Waiting for DB...")
+    db_operation(
+        func=partial(provision_db_with_users, app=app, users=users),
+        retry=app.config['DB_PROVISION_RETRY']
+    )
