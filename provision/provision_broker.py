@@ -109,8 +109,6 @@ if __name__ == '__main__':
 
     client = _get_rabbitmq_rest_client(config['BROKER'])
 
-    _logger.info(f"Adding users...")
     _add_users()
 
-    _logger.info(f"Applying policies...")
     _apply_policies()
