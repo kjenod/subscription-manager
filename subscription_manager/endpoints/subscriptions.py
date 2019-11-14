@@ -164,7 +164,7 @@ def delete_subscription(subscription_id: int) -> t.Tuple[None, int]:
     subscription = db.get_subscription_by_id(subscription_id, **params)
 
     if subscription is None:
-        raise NotFoundError(f"Topic with id {subscription_id} does not exist")
+        raise NotFoundError(f"Subscription with id {subscription_id} does not exist")
 
     try:
         events.delete_subscription_event(subscription)
