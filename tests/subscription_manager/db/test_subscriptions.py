@@ -33,15 +33,24 @@ from swim_backend.db import db_save
 from subscription_manager.db import Subscription
 from subscription_manager.db.subscriptions import get_subscription_by_id, get_subscriptions, create_subscription, \
     update_subscription, delete_subscription, get_subscription_by_queue
-from tests.subscription_manager.utils import make_subscription, make_user
+from tests.subscription_manager.utils import make_subscription, make_user, make_topic
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
 @pytest.fixture
+def generate_topic(session):
+    def _generate_topic(user=None):
+        topic = make_topic(user=user)
+        return db_save(session, topic)
+
+    return _generate_topic
+
+
+@pytest.fixture
 def generate_subscription(session):
-    def _generate_subscription(user=None):
-        subscription = make_subscription(user=user)
+    def _generate_subscription(topics, user=None):
+        subscription = make_subscription(topics, user=user)
         return db_save(session, subscription)
 
     return _generate_subscription
@@ -60,16 +69,17 @@ def test_get_subscription_by_id__does_not_exist__returns_none():
     assert get_subscription_by_id(1111) is None
 
 
-def test_get_subscription_by_id__does_not_belong_to_the_user__returns_none(generate_subscription):
-    subscription1 = generate_subscription()
-    subscription2 = generate_subscription()
+def test_get_subscription_by_id__does_not_belong_to_the_user__returns_none(generate_subscription, generate_topic):
+    topic = generate_topic()
+    subscription1 = generate_subscription(topics=[topic])
+    subscription2 = generate_subscription(topics=[topic])
 
     assert get_subscription_by_id(subscription1.id, subscription2.user_id) is None
     assert get_subscription_by_id(subscription2.id, subscription1.user_id) is None
 
 
-def test_get_subscription_by_id__object_exists_and_is_returned(generate_subscription):
-    subscription = generate_subscription()
+def test_get_subscription_by_id__object_exists_and_is_returned(generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic()])
 
     db_subscription = get_subscription_by_id(subscription.id, subscription.user_id)
 
@@ -82,16 +92,17 @@ def test_get_subscription_by_queue__does_not_exist__returns_none():
     assert get_subscription_by_queue('inexistent_queue') is None
 
 
-def test_get_subscription_by_queue__does_not_belong_to_the_user__returns_none(generate_subscription):
-    subscription1 = generate_subscription()
-    subscription2 = generate_subscription()
+def test_get_subscription_by_queue__does_not_belong_to_the_user__returns_none(generate_subscription, generate_topic):
+    topic = generate_topic()
+    subscription1 = generate_subscription(topics=[topic])
+    subscription2 = generate_subscription(topics=[topic])
 
     assert get_subscription_by_queue(subscription1.queue, subscription2.user_id) is None
     assert get_subscription_by_queue(subscription2.queue, subscription1.user_id) is None
 
 
-def test_get_subscription_by_queue__object_exists_and_is_returned(generate_subscription):
-    subscription = generate_subscription()
+def test_get_subscription_by_queue__object_exists_and_is_returned(generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic()])
 
     db_subscription = get_subscription_by_queue(subscription.queue, subscription.user_id)
 
@@ -106,19 +117,22 @@ def test_get_subscriptions__no_subscription_in_db__returns_empty_list(generate_s
     assert [] == db_subscriptions
 
 
-def test_get_subscriptions__no_subscription_in_db_for_user__returns_empty_list(generate_user, generate_subscription):
+def test_get_subscriptions__no_subscription_in_db_for_user__returns_empty_list(generate_user, generate_subscription,
+                                                                               generate_topic):
+    topic = generate_topic()
     user1 = generate_user()
     user2 = generate_user()
-    generate_subscription(user=user1)
-    generate_subscription(user=user1)
+    generate_subscription(topics=[topic], user=user1)
+    generate_subscription(topics=[topic], user=user1)
 
     db_subscriptions = get_subscriptions(user_id=user2.id)
 
     assert [] == db_subscriptions
 
 
-def test_get_subscriptions__filter_by_queue(generate_subscription):
-    subscriptions = [generate_subscription(), generate_subscription()]
+def test_get_subscriptions__filter_by_queue(generate_subscription, generate_topic):
+    topic = generate_topic()
+    subscriptions = [generate_subscription(topics=[topic]), generate_subscription(topics=[topic])]
 
     db_subscriptions = get_subscriptions(queue=subscriptions[0].queue)
 
@@ -126,8 +140,9 @@ def test_get_subscriptions__filter_by_queue(generate_subscription):
     assert subscriptions[0].queue == db_subscriptions[0].queue
 
 
-def test_get_subscriptions__existing_subscriptions_are_returned(generate_subscription):
-    subscriptions = [generate_subscription(), generate_subscription()]
+def test_get_subscriptions__existing_subscriptions_are_returned(generate_subscription, generate_topic):
+    topic = generate_topic()
+    subscriptions = [generate_subscription(topics=[topic]), generate_subscription(topics=[topic])]
 
     db_subscriptions = get_subscriptions()
 
@@ -135,22 +150,22 @@ def test_get_subscriptions__existing_subscriptions_are_returned(generate_subscri
     assert subscriptions == db_subscriptions
 
 
-def test_create_subscription():
-    subscription = make_subscription()
+def test_create_subscription(generate_topic):
+    subscription = make_subscription(topics=[generate_topic()])
 
     db_subscription = create_subscription(subscription)
 
     assert isinstance(db_subscription, Subscription)
     assert isinstance(db_subscription.id, int)
-    assert subscription.topic == db_subscription.topic
+    assert subscription.topics == db_subscription.topics
     assert subscription.queue == db_subscription.queue
     assert subscription.active == db_subscription.active
     assert subscription.qos == db_subscription.qos
     assert subscription.durable == db_subscription.durable
 
 
-def test_update_subscription(generate_subscription):
-    subscription = generate_subscription()
+def test_update_subscription(generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic()])
 
     new_active = not(subscription.active)
     subscription.active = new_active
@@ -161,8 +176,8 @@ def test_update_subscription(generate_subscription):
     assert new_active == updated_subscription.active
 
 
-def test_delete_subscription(generate_subscription):
-    subscription = generate_subscription()
+def test_delete_subscription(generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic()])
 
     delete_subscription(subscription)
 

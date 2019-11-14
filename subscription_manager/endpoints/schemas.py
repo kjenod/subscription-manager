@@ -28,13 +28,13 @@ http://opensource.org/licenses/BSD-3-Clause
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
 
-from marshmallow import post_dump, ValidationError
-from marshmallow.fields import Nested, Integer
+from marshmallow import post_dump, ValidationError, pre_dump, pre_load, post_load
+from marshmallow.fields import Nested, Integer, List, String
 from marshmallow_sqlalchemy import ModelSchemaOpts, ModelSchema
 
 from swim_backend.db import db
 from subscription_manager.db.models import Topic, Subscription, User
-from subscription_manager.db.topics import get_topic_by_id
+from subscription_manager.db.topics import get_topic_by_id, get_topic_by_name
 
 __author__ = "EUROCONTROL (SWIM)"
 
@@ -57,34 +57,70 @@ class TopicSchema(BaseSchema):
     class Meta:
         model = Topic
         load_only = ("user", "user_id", "subscriptions")
-        dump_only = ("id",)
+        # dump_only = ("id",)
 
     user_id = Integer(required=False)
-
-
-def validate_topic_id(topic_id):
-    topic = get_topic_by_id(topic_id)
-
-    if topic is None:
-        raise ValidationError(f"there is no topic with id {topic_id}")
 
 
 class SubscriptionSchema(BaseSchema):
 
     class Meta:
         model = Subscription
-        load_only = ("topic_id", "user", "user_id")
-        dump_only = ("id", "queue", "topic")
+        load_only = ("user", "user_id")
+        dump_only = ("id", "queue")
 
-    topic_id = Integer(validate=validate_topic_id)
+    topics = Nested(TopicSchema, many=True)
     user_id = Integer(required=False)
-    topic = Nested(TopicSchema)
 
     @post_dump
     def serialize_qos(self, subscription_data, **kwargs):
         subscription_data['qos'] = subscription_data['qos'].value
 
         return subscription_data
+
+
+class SubscriptionPostSchema(BaseSchema):
+
+    class Meta:
+        model = Subscription
+        dump_only = ("id", "queue", "user_id")
+
+    topics = Nested(TopicSchema, many=True)
+
+    @staticmethod
+    def _validate_topic_exists(topic_name):
+        topic = get_topic_by_name(topic_name)
+
+        if topic is None:
+            raise ValidationError(f"No topic found with name '{topic_name}'", field_name='topics')
+
+        return {'name': topic_name}
+
+    def _handle_topics(self, data, **kwargs):
+        if not data['topics']:
+            raise ValidationError(f"No topics were provided", field_name='topics')
+
+        data['topics'] = [self._validate_topic_exists(topic_name) for topic_name in data['topics']]
+
+        return data
+
+    @pre_load
+    def handle_topics(self, data, **kwargs):
+        return self._handle_topics(data, **kwargs)
+
+    @post_load
+    def post(self, item, **kwargs):
+        item.topics = [get_topic_by_name(topic.name) for topic in item.topics]
+
+        return item
+
+
+class SubscriptionPutSchema(SubscriptionPostSchema):
+    def _handle_topics(self, data, **kwargs):
+        if data.get('topics'):
+            data['topics'] = [self._validate_topic_exists(topic_name) for topic_name in data['topics']]
+
+        return data
 
 
 class UserSchema(BaseSchema):

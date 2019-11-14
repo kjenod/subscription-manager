@@ -57,12 +57,15 @@ class BrokerUpdateSubscription(UpdateSubscription):
     def _perform_update(current_subscription, updated_subscription):
         if current_subscription.active != updated_subscription.active:
             if not updated_subscription.active:
-                broker.delete_queue_binding(queue=updated_subscription.queue,
-                                            topic=updated_subscription.topic.name)
+                for topic_name in updated_subscription.topic_names:
+                    broker.delete_queue_binding(queue=updated_subscription.queue,
+                                                topic=topic_name)
             else:
-                broker.bind_queue_to_topic(queue=updated_subscription.queue,
-                                           topic=updated_subscription.topic.name,
-                                           durable=updated_subscription.durable)
+                for topic_name in updated_subscription.topic_names:
+                    broker.bind_queue_to_topic(queue=updated_subscription.queue,
+                                               topic=topic_name,
+                                               durable=updated_subscription.durable)
+
     def do(self, *args, **kwargs):
         self._perform_update(current_subscription=self.current_subscription,
                              updated_subscription=self.updated_subscription)

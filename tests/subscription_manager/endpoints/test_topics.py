@@ -64,11 +64,11 @@ def generate_topic(session):
 @pytest.fixture
 def generate_subscription(session):
     def _generate_subscription(topic=None, user=None, with_broker_queue=False):
-        subscription = make_subscription(topic=topic, user=user)
+        subscription = make_subscription(topics=[topic], user=user)
         db_save(session, subscription)
 
         if with_broker_queue:
-            broker.create_queue_for_topic(subscription.queue, subscription.topic.name)
+            broker.create_queue_for_topics(subscription.queue, subscription.topic_names)
 
         return subscription
     return _generate_subscription

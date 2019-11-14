@@ -27,6 +27,8 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
+from typing import Union, List
+
 from broker_rest_client.rabbitmq_rest_client import RabbitMQRestClient
 from flask import current_app as app
 from rest_client.errors import APIError
@@ -82,13 +84,16 @@ def get_queue(queue):
         return None
 
 
-def create_queue_for_topic(queue, topic):
+def create_queue_for_topics(queue: str, topics: Union[str, List[str]]):
 
     try:
         broker_client.create_queue(name=queue)
-        broker_client.bind_queue_to_topic(queue=queue, topic='default', key=topic)
+        if isinstance(topics, str):
+            topics = [topics]
+        for topic in topics:
+            broker_client.bind_queue_to_topic(queue=queue, topic='default', key=topic)
     except APIError as e:
-        raise BrokerError(f"Error while creating queue {queue} for topic {topic}") from e
+        raise BrokerError(f"Error while creating queue {queue} for topics {topics}") from e
 
 
 def delete_queue(queue):

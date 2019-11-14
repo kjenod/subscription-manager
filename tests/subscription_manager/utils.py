@@ -43,13 +43,13 @@ def unique_id():
 def make_topic(name='test_topic', user=None) -> Topic:
     return Topic(
         name=name,
-        user = user or make_user()
+        user=user or make_user()
     )
 
 
-def make_subscription(topic=None, user=None) -> Subscription:
+def make_subscription(topics, user=None) -> Subscription:
     return Subscription(
-        topic=topic or make_topic(name=unique_id()),
+        topics=topics,
         user=user or make_user(),
         queue=unique_id()
     )

@@ -30,6 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 from pathlib import Path
 
 import connexion
+from flask import Flask
 from swagger_ui_bundle import swagger_ui_3_path
 from pkg_resources import resource_filename
 
@@ -41,9 +42,11 @@ __author__ = "EUROCONTROL (SWIM)"
 
 
 # TODO: fix typing hints
+# TODO: attach subscription to topic
+# TODO: detach subscription from topic
 
 
-def create_app(config_file):
+def create_app(config_file: str) -> Flask:
     options = {'swagger_path': swagger_ui_3_path}
     connexion_app = connexion.App(__name__, options=options)
 

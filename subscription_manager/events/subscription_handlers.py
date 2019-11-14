@@ -29,33 +29,55 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 
 from subscription_manager.broker import broker
-from subscription_manager.db import subscriptions as db
+from subscription_manager.db import subscriptions as db, Subscription
 from subscription_manager.db.utils import generate_queue
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def create_subscription_handler(subscription):
+def create_subscription_handler(subscription: Subscription) -> None:
+    """
+    Handler to be used upon  the event of creating a new subscription:
+        - saves the subscription in DB
+        - creates a queue for its assigned topics
+
+    :param subscription:
+    """
     subscription.queue = generate_queue()
 
     db.create_subscription(subscription)
 
-    broker.create_queue_for_topic(subscription.queue, subscription.topic.name)
+    broker.create_queue_for_topics(subscription.queue, subscription.topic_names)
 
 
-def update_subscription_handler(current_subscription, updated_subscription):
+def update_subscription_handler(current_subscription: Subscription, updated_subscription: Subscription) -> None:
+    """
+        Handler to be used upon  the event of updating a subscription and more specifically when it's state is changed (PAUSE/RESUME):
+            - if it becomes active then the existing queue is again bound with its topics in the broker
+            - if it becomes inactive then the queue will be deleted in the broker
+    :param current_subscription:
+    :param updated_subscription:
+    """
     if current_subscription.active != updated_subscription.active:
         if not updated_subscription.active:
-            broker.delete_queue_binding(queue=updated_subscription.queue,
-                                        topic=updated_subscription.topic.name)
+            for topic_name in updated_subscription.topic_names:
+                broker.delete_queue_binding(queue=updated_subscription.queue,
+                                            topic=topic_name)
         else:
-            broker.bind_queue_to_topic(queue=updated_subscription.queue,
-                                       topic=updated_subscription.topic.name,
-                                       durable=updated_subscription.durable)
+            for topic_name in updated_subscription.topic_names:
+                broker.bind_queue_to_topic(queue=updated_subscription.queue,
+                                           topic=topic_name,
+                                           durable=updated_subscription.durable)
 
     db.update_subscription(updated_subscription)
 
 
-def delete_subscription_handler(subscription):
+def delete_subscription_handler(subscription: Subscription) -> None:
+    """
+    Handler to be used upon  the event of deleting a subscription by:
+        - deletes the queue from the broker
+        - deletes the subscription from DB
+    :param subscription:
+    """
     broker.delete_queue(subscription.queue)
     db.delete_subscription(subscription)

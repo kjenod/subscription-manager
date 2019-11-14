@@ -532,11 +532,15 @@ components:
       description: the data to be sent in order to create a new subscription
       type: object
       required:
-        - topic_id
+        - topics
       properties:
-        topic_id:
-          type: number
-          example: 1
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicName'
+          example: [
+            "topic_name1", "topic_name2"
+          ]
         active:
           type: boolean
           example: true
@@ -549,9 +553,13 @@ components:
       description: the data to be sent in order to update an existing subscription
       type: object
       properties:
-        topic_id:
-          type: number
-          example: 1
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopicName'
+          example: [
+            "topic_name1", "topic_name2"
+          ]
         active:
           type: boolean
           example: true
@@ -564,8 +572,10 @@ components:
       description: the subscription data returned back from the server
       type: object
       properties:
-        topic:
-          $ref: '#/components/schemas/Topic'
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
         id:
           type: number
           example: 1

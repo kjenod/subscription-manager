@@ -33,7 +33,6 @@ from swim_backend.events import EventHandler
 __author__ = "EUROCONTROL (SWIM)"
 
 
-
 class DbUpdateTopic(EventHandler):
 
     def __init__(self, current_topic, updated_topic):

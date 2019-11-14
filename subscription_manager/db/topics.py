@@ -52,6 +52,21 @@ def get_topic_by_id(topic_id: int, user_id: t.Optional[int] = None) -> t.Union[T
     return result
 
 
+def get_topic_by_name(topic_name: str, user_id: t.Optional[int] = None) -> t.Union[Topic, None]:
+    filters = {
+        'name': topic_name
+    }
+
+    if user_id:
+        filters['user_id'] = user_id
+    try:
+        result = Topic.query.filter_by(**filters).one()
+    except NoResultFound:
+        result = None
+
+    return result
+
+
 def get_topics(user_id: t.Optional[int] = None) -> t.List[Topic]:
     filters = {'user_id': user_id} if user_id else {}
 

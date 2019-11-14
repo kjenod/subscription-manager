@@ -34,8 +34,17 @@ from sqlalchemy.exc import SQLAlchemyError
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def generate_queue():
+def generate_queue() -> str:
+    """
+    :return: UUID
+    """
     return uuid.uuid4().hex
 
-def is_duplicate_record_error(error: SQLAlchemyError):
+
+def is_duplicate_record_error(error: SQLAlchemyError) -> bool:
+    """
+    Determines whether the error comes from the PostgreSQL error of duplicate record saving attempt
+    :param error:
+    :return:
+    """
     return hasattr(error, 'orig') and error.orig.pgcode == '23505'

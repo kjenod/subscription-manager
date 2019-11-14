@@ -54,6 +54,13 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
 
+topic_subscriptions_table = db.Table(
+    'topic_subscriptions', db.Model.metadata,
+    db.Column('topic_id', db.Integer, db.ForeignKey('topics.id')),
+    db.Column('subscription_id', db.Integer, db.ForeignKey('subscriptions.id'))
+)
+
+
 class Topic(db.Model):
     __tablename__ = 'topics'
 
@@ -62,6 +69,9 @@ class Topic(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
 
     user = db.relationship("User", backref='topics')
+    subscriptions = db.relationship("Subscription",
+                                    secondary=topic_subscriptions_table,
+                                    backref="topics")
 
 
 class QOS(enum.Enum):
@@ -78,7 +88,6 @@ class Subscription(db.Model):
     __tablename__ = 'subscriptions'
 
     id = db.Column(db.Integer, primary_key=True)
-    topic_id = db.Column(db.Integer, db.ForeignKey(Topic.id), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
 
     queue = db.Column(db.String(128), nullable=False, unique=True)
@@ -86,6 +95,8 @@ class Subscription(db.Model):
     qos = db.Column(db.Enum(QOS), nullable=False, default=QOS.EXACTLY_ONCE.value)
     durable = db.Column(db.Boolean, nullable=False, default=True)
 
-    topic = db.relationship("Topic", backref='subscriptions')
     user = db.relationship("User", backref='subscriptions')
 
+    @property
+    def topic_names(self):
+        return [topic.name for topic in self.topics]

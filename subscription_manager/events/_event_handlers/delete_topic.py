@@ -34,7 +34,6 @@ from swim_backend.events import EventHandler
 __author__ = "EUROCONTROL (SWIM)"
 
 
-
 class DbDeleteTopic(EventHandler):
     def __init__(self, topic):
         self.topic = topic

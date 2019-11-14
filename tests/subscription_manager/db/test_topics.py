@@ -31,7 +31,8 @@ import pytest
 
 from swim_backend.db import db_save
 from subscription_manager.db import Topic
-from subscription_manager.db.topics import get_topic_by_id, get_topics, create_topic, update_topic, delete_topic
+from subscription_manager.db.topics import get_topic_by_id, get_topics, create_topic, update_topic, delete_topic, \
+    get_topic_by_name
 from tests.subscription_manager.utils import make_topic, make_user
 
 __author__ = "EUROCONTROL (SWIM)"
@@ -44,6 +45,7 @@ def generate_topic(session):
         return db_save(session, topic)
 
     return _generate_topic
+
 
 @pytest.fixture
 def generate_user(session):
@@ -70,6 +72,27 @@ def test_get_topic_by_id__object_exists_and_is_returned(generate_topic):
     topic = generate_topic('test_topic')
 
     db_topic = get_topic_by_id(topic.id)
+
+    assert isinstance(db_topic, Topic)
+    assert topic.id == db_topic.id
+
+
+def test_get_topic_by_name__does_not_exist__returns_none():
+    assert get_topic_by_name('invalid name') is None
+
+
+def test_get_topic_by_name__does_not_belong_to_the_user__returns_none(generate_topic):
+    topic1 = generate_topic('test_topic1')
+    topic2 = generate_topic('test_topic2')
+
+    assert get_topic_by_name('test_topic1', topic2.user_id) is None
+    assert get_topic_by_name('test_topic2', topic1.user_id) is None
+
+
+def test_get_topic_by_name__object_exists_and_is_returned(generate_topic):
+    topic = generate_topic('test_topic')
+
+    db_topic = get_topic_by_name('test_topic')
 
     assert isinstance(db_topic, Topic)
     assert topic.id == db_topic.id

@@ -56,4 +56,4 @@ class BrokerDeleteSubscription(DeleteSubscription):
         broker.delete_queue(self.subscription.queue)
 
     def undo(self, *args, **kwargs):
-        broker.create_queue_for_topic(self.subscription.queue, self.subscription.topic.name)
+        broker.create_queue_for_topics(self.subscription.queue, self.subscription.topic_names)

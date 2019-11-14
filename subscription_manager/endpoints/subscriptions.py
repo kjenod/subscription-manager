@@ -39,7 +39,7 @@ from swim_backend.typing import JSONType
 from subscription_manager.broker import broker
 from subscription_manager.db import subscriptions as db, Subscription
 from subscription_manager.db.utils import is_duplicate_record_error
-from subscription_manager.endpoints.schemas import SubscriptionSchema
+from subscription_manager.endpoints.schemas import SubscriptionSchema, SubscriptionPostSchema, SubscriptionPutSchema
 from swim_backend.marshal import marshal_with
 
 from subscription_manager.events import events
@@ -97,7 +97,7 @@ def post_subscription() -> t.Tuple[Subscription, int]:
              backend.errors.BadGatewayError (HTTP error 502)
     """
     try:
-        subscription = SubscriptionSchema().load(data=request.get_json())
+        subscription = SubscriptionPostSchema().load(data=request.get_json())
         subscription.user_id = request.user.id
 
         events.create_subscription_event(subscription)
@@ -136,7 +136,7 @@ def put_subscription(subscription_id: int) -> JSONType:
 
     current_subscription = deepcopy(subscription)
     try:
-        updated_subscription = SubscriptionSchema().load(data=request.get_json(), instance=subscription)
+        updated_subscription = SubscriptionPutSchema().load(data=request.get_json(), instance=subscription)
 
         events.update_subscription_event(current_subscription, updated_subscription)
     except ValidationError as e:

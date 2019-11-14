@@ -34,7 +34,6 @@ from subscription_manager.events._event_handlers.create_topic import DbCreateTop
 __author__ = "EUROCONTROL (SWIM)"
 
 
-
 class CreateTopicEvent(EventSafe):
     _type = 'Create topic'
 

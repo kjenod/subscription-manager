@@ -29,7 +29,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 """
 from swim_backend.events import Event
 from swim_backend.local import LazyProxy
-from subscription_manager.events.subscription_handlers import create_subscription_handler, update_subscription_handler, \
+from subscription_manager.events.subscription_handlers import create_subscription_handler, update_subscription_handler,\
     delete_subscription_handler
 from subscription_manager.events.topic_handlers import create_topic_handler, delete_topic_handler, \
     delete_topic_subscriptions_handler
@@ -39,10 +39,6 @@ __author__ = "EUROCONTROL (SWIM)"
 
 class CreateTopicEvent(Event):
     _type = 'Create topic'
-
-#
-# class UpdateTopicEvent(Event):
-#     _type = 'Update topic'
 
 
 class DeleteTopicEvent(Event):
@@ -65,14 +61,8 @@ class DeleteSubscription(Event):
 # Topic events
 # ############
 
-# create_topic_event = LazyProxy(lambda: CreateTopicEvent([
-#     create_topic_handler
-# ]))
 create_topic_event = LazyProxy(lambda: CreateTopicEvent())
 create_topic_event.append(create_topic_handler)
-
-# update_topic_event = LazyProxy(lambda: UpdateTopicEvent())
-# update_topic_event.append(update_topic_handler)
 
 delete_topic_event = LazyProxy(lambda: DeleteTopicEvent())
 delete_topic_event.append(delete_topic_subscriptions_handler)

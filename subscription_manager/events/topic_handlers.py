@@ -27,28 +27,35 @@ http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
 """
-from subscription_manager.db import topics as db
+from subscription_manager.db import topics as db, Topic
 from subscription_manager.events.subscription_handlers import delete_subscription_handler
 
 __author__ = "EUROCONTROL (SWIM)"
 
 
-def create_topic_handler(topic):
+def create_topic_handler(topic: Topic) -> None:
+    """
+    Handler to be used upon the event of creating a new topic:
+        - saves it in DB
+    :param topic:
+    """
     db.create_topic(topic)
 
 
-# def update_topic_handler(current_topic, updated_topic):
-#     db.update_topic(updated_topic)
-#
-#     for subscription in updated_topic.subscriptions:
-#         broker.delete_queue_binding(queue=subscription.queue, topic=current_topic.name)
-#         broker.bind_queue_to_topic(queue=subscription.queue, topic=updated_topic.name, durable=subscription.durable)
-
-
-def delete_topic_handler(topic):
+def delete_topic_handler(topic: Topic) -> None:
+    """
+    Handler to be used upon the event of deleting a topic:
+        - deletes it from DB
+    :param topic:
+    """
     db.delete_topic(topic)
 
 
-def delete_topic_subscriptions_handler(topic):
+def delete_topic_subscriptions_handler(topic: Topic) -> None:
+    """
+    Handler to be used upon the event of deleting a topic:
+        - triggers the handler of subscription deletion
+    :param topic:
+    """
     for subscription in topic.subscriptions:
         delete_subscription_handler(subscription)

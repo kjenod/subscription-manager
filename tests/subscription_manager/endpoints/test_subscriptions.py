@@ -65,12 +65,12 @@ def generate_topic(session):
 
 @pytest.fixture
 def generate_subscription(session):
-    def _generate_subscription(user=None, with_broker_queue=False):
-        subscription = make_subscription(user=user)
+    def _generate_subscription(topics, user=None, with_broker_queue=False):
+        subscription = make_subscription(topics, user=user)
         db_save(session, subscription)
 
         if with_broker_queue:
-            broker.create_queue_for_topic(subscription.queue, subscription.topic.name)
+            broker.create_queue_for_topics(subscription.queue, subscription.topic_names)
 
         return subscription
     return _generate_subscription
@@ -84,11 +84,12 @@ def test_get_subscription__subscription_does_not_exist__returns_404(test_client,
     assert 404 == response.status_code
 
 
-def test_get_subscription__user_tries_to_get_subscription_of_another_user__returns_404(test_client, generate_user,
-                                                                                       generate_subscription):
+def test_get_subscription__user_tries_to_get_subscription_of_another_user__returns_404(
+        test_client, generate_user, generate_subscription, generate_topic):
+
     user1 = generate_user('username1', DEFAULT_LOGIN_PASS)
     user2 = generate_user('username2', DEFAULT_LOGIN_PASS)
-    subscription = generate_subscription(user=user1)
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=user1)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
@@ -98,8 +99,8 @@ def test_get_subscription__user_tries_to_get_subscription_of_another_user__retur
 
 
 def test_get_subscription__admin_user_can_get_subscription_of_another_user(test_client, test_user, test_admin_user,
-                                                                           generate_subscription):
-    subscription = generate_subscription(user=test_user)
+                                                                           generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
@@ -107,7 +108,7 @@ def test_get_subscription__admin_user_can_get_subscription_of_another_user(test_
 
     assert 200 == response.status_code
     response_data = json.loads(response.data)
-    assert subscription.topic.name == response_data['topic']['name']
+    assert subscription.topics[0].name == response_data['topics'][0]['name']
     assert subscription.queue == response_data['queue']
     assert subscription.active == response_data['active']
     assert subscription.qos.value == response_data['qos']
@@ -115,8 +116,8 @@ def test_get_subscription__admin_user_can_get_subscription_of_another_user(test_
     assert subscription.id == response_data['id']
 
 
-def test_get_subscription__unauthorized_user__returns_401(test_client, generate_subscription):
-    subscription = generate_subscription()
+def test_get_subscription__unauthorized_user__returns_401(test_client, generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic name')])
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
@@ -128,8 +129,9 @@ def test_get_subscription__unauthorized_user__returns_401(test_client, generate_
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_get_subscription__subscription_exists_and_its_data_is_returned(test_client, generate_subscription, test_user):
-    subscription = generate_subscription(user=test_user)
+def test_get_subscription__subscription_exists_and_its_data_is_returned(
+        test_client, test_user, generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
@@ -138,7 +140,7 @@ def test_get_subscription__subscription_exists_and_its_data_is_returned(test_cli
     assert 200 == response.status_code
 
     response_data = json.loads(response.data)
-    assert subscription.topic.name == response_data['topic']['name']
+    assert subscription.topics[0].name == response_data['topics'][0]['name']
     assert subscription.queue == response_data['queue']
     assert subscription.active == response_data['active']
     assert subscription.qos.value == response_data['qos']
@@ -146,11 +148,12 @@ def test_get_subscription__subscription_exists_and_its_data_is_returned(test_cli
     assert subscription.id == response_data['id']
 
 
-def test_get_subscriptions__no_subscription_exists_for_user__empty_list_is_returned(test_client, generate_user,
-                                                                                    generate_subscription):
+def test_get_subscriptions__no_subscription_exists_for_user__empty_list_is_returned(
+        test_client, generate_user, generate_subscription, generate_topic):
+
     user1 = generate_user('username1', DEFAULT_LOGIN_PASS)
     user2 = generate_user('username2', DEFAULT_LOGIN_PASS)
-    generate_subscription(user=user1)
+    generate_subscription(topics=[generate_topic('topic name')], user=user1)
 
     url = f'{BASE_PATH}/subscriptions/'
 
@@ -162,10 +165,11 @@ def test_get_subscriptions__no_subscription_exists_for_user__empty_list_is_retur
     assert [] == response_data
 
 
-def test_get_subscriptions__admin_user_can_get_all_existing_subscriptions(test_client, test_admin_user, generate_user,
-                                                                          generate_subscription):
-    generate_subscription()
-    generate_subscription()
+def test_get_subscriptions__admin_user_can_get_all_existing_subscriptions(
+        test_client, test_admin_user, generate_user, generate_subscription, generate_topic):
+    topic = generate_topic('topic name')
+    generate_subscription(topics=[topic])
+    generate_subscription(topics=[topic])
 
     url = f'{BASE_PATH}/subscriptions/'
 
@@ -188,9 +192,10 @@ def test_get_subscriptions__unauthorized_user__returns_401(test_client):
     assert 'Invalid credentials' == response_data['detail']
 
 
-def test_get_subscriptions__filter_by_queue(test_client, generate_subscription, test_user):
-    subscriptions = [generate_subscription(user=test_user),
-                     generate_subscription(user=test_user)]
+def test_get_subscriptions__filter_by_queue(test_client, test_user, generate_subscription, generate_topic):
+    topic = generate_topic('topic name')
+    subscriptions = [generate_subscription(topics=[topic], user=test_user),
+                     generate_subscription(topics=[topic], user=test_user)]
 
     url = f'{BASE_PATH}/subscriptions/?queue={subscriptions[0].queue}'
 
@@ -204,9 +209,12 @@ def test_get_subscriptions__filter_by_queue(test_client, generate_subscription, 
     assert subscriptions[0].queue == response_data[0]['queue']
 
 
-def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_client, generate_subscription, test_user):
-    subscriptions = [generate_subscription(user=test_user),
-                     generate_subscription(user=test_user)]
+def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(
+        test_client, test_user, generate_subscription, generate_topic):
+
+    topic = generate_topic('topic name')
+    subscriptions = [generate_subscription(topics=[topic], user=test_user),
+                     generate_subscription(topics=[topic], user=test_user)]
 
     url = f'{BASE_PATH}/subscriptions/'
 
@@ -216,19 +224,24 @@ def test_get_subscriptions__subscriptions_exist_and_are_returned_as_list(test_cl
 
     response_data = json.loads(response.data)
     assert isinstance(response_data, list)
-    assert [t.id for t in subscriptions] == [d['id'] for d in response_data]
-    assert [t.queue for t in subscriptions] == [d['queue'] for d in response_data]
-    assert [t.topic.name for t in subscriptions] == [d['topic']['name'] for d in response_data]
-    assert [t.durable for t in subscriptions] == [d['durable'] for d in response_data]
-    assert [t.active for t in subscriptions] == [d['active'] for d in response_data]
-    assert [t.qos.value for t in subscriptions] == [d['qos'] for d in response_data]
+    assert [s.id for s in subscriptions] == [d['id'] for d in response_data]
+    assert [s.queue for s in subscriptions] == [d['queue'] for d in response_data]
+    assert [s.topics[0].name for s in subscriptions] == [d['topics'][0]['name'] for d in response_data]
+    assert [s.durable for s in subscriptions] == [d['durable'] for d in response_data]
+    assert [s.active for s in subscriptions] == [d['active'] for d in response_data]
+    assert [s.qos.value for s in subscriptions] == [d['qos'] for d in response_data]
 
 
-def test_post_subscription__missing_topic_id__returns_400(test_client, test_user):
+@pytest.mark.parametrize('topics, expected_error_message', [
+    ([], "{'topics': ['No topics were provided']}"),
+    (['invalid topic'], """{'topics': ["No topic found with name 'invalid topic'"]}""")
+])
+def test_post_subscription__invalid_topics__returns_400(test_client, test_user, topics, expected_error_message):
     subscription_data = {
         'active': True,
         'qos': QOS.EXACTLY_ONCE.value,
-        'durable': True
+        'durable': True,
+        'topics': topics
     }
 
     url = f'{BASE_PATH}/subscriptions/'
@@ -239,14 +252,14 @@ def test_post_subscription__missing_topic_id__returns_400(test_client, test_user
     assert 400 == response.status_code
 
     response_data = json.loads(response.data)
-    assert "'topic_id' is a required property" == response_data['detail']
+    assert expected_error_message == response_data['detail']
 
 
 def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic, test_user):
     topic = generate_topic('test_topic')
 
     subscription_data = {
-        'topic_id': topic.id,
+        'topics': [topic.name],
         'active': True,
         'qos': 'invalid',
         'durable': True
@@ -263,28 +276,12 @@ def test_post_subscription__invalid_qos__returns_400(test_client, generate_topic
     assert f"'invalid' is not one of {QOS.all()}" == response_data['detail']
 
 
-def test_post_subscription__invalid_topic_id__returns_400(test_client, test_user):
-    subscription_data = {
-        'topic_id': 1234,
-    }
-
-    url = f'{BASE_PATH}/subscriptions/'
-
-    response = test_client.post(url, data=json.dumps(subscription_data), content_type='application/json',
-                                headers=basic_auth_header(test_user))
-
-    assert 400 == response.status_code
-
-    response_data = json.loads(response.data)
-    assert "{'topic_id': ['there is no topic with id 1234']}" == response_data['detail']
-
-
 @mock.patch('subscription_manager.db.subscriptions.create_subscription', side_effect=SQLAlchemyError(None, None, None))
 def test_post_subscription__db_error__returns_500(mock_create_subscription, test_client, generate_topic, test_user):
     topic = generate_topic('test_topic')
 
     subscription_data = {
-        'topic_id': topic.id,
+        'topics': [topic.name],
         'active': True,
         'qos': QOS.EXACTLY_ONCE.value,
         'durable': True
@@ -298,12 +295,12 @@ def test_post_subscription__db_error__returns_500(mock_create_subscription, test
     assert 500 == response.status_code
 
 
-@mock.patch('subscription_manager.broker.broker.create_queue_for_topic', side_effect=BrokerError('error'))
+@mock.patch('subscription_manager.broker.broker.create_queue_for_topics', side_effect=BrokerError('error'))
 def test_post_subscription__broker_error__returns_502(mock_queue_for_topic, test_client, generate_topic, test_user):
     topic = generate_topic('test_topic')
 
     subscription_data = {
-        'topic_id': topic.id,
+        'topics': [topic.name],
         'active': True,
         'qos': QOS.EXACTLY_ONCE.value,
         'durable': True
@@ -323,7 +320,7 @@ def test_post_subscription__unauthorized_user__returns_401(test_client, generate
     topic = generate_topic('test_topic')
 
     subscription_data = {
-        'topic_id': topic.id,
+        'topics': [topic.name],
         'active': True,
         'qos': QOS.EXACTLY_ONCE.value,
         'durable': True
@@ -347,7 +344,7 @@ def test_post_subscription__subscription_is_saved_in_db(mock_broker_client, test
     topic = generate_topic('test_topic')
 
     subscription_data = {
-        'topic_id': topic.id,
+        'topics': [topic.name],
         'active': True,
         'qos': QOS.EXACTLY_ONCE.value,
         'durable': True
@@ -369,14 +366,14 @@ def test_post_subscription__subscription_is_saved_in_db(mock_broker_client, test
     assert subscription_data['durable'] == response_data['durable']
     assert subscription_data['active'] == response_data['active']
     assert subscription_data['qos'] == response_data['qos']
-    assert subscription_data['topic_id'] == response_data['topic']['id']
+    assert subscription_data['topics'][0] == response_data['topics'][0]['name']
 
     db_subscription = get_subscription_by_id(response_data['id'])
     assert db_subscription is not None
     assert subscription_data['qos'] == db_subscription.qos.value
     assert subscription_data['active'] == db_subscription.active
     assert subscription_data['durable'] == db_subscription.durable
-    assert subscription_data['topic_id'] == db_subscription.topic.id
+    assert subscription_data['topics'][0] == db_subscription.topics[0].name
 
     broker.delete_queue(response_data['queue'])
 
@@ -395,11 +392,11 @@ def test_put_subscription__subscription_does_not_exist__returns_404(test_client,
     assert "Subscription with id 1234 does not exist" == response_data['detail']
 
 
-def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscription, test_user):
-    subscription = generate_subscription(user=test_user)
+def test_put_subscription__invalid_qos__returns_400(test_client, test_user, generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic_name')], user=test_user)
 
     subscription_data = {
-        'topic_id': subscription.topic.id,
+        'topics': [subscription.topics[0].name],
         'active': True,
         'qos': 'invalid',
         'durable': True
@@ -416,11 +413,11 @@ def test_put_subscription__invalid_qos__returns_400(test_client, generate_subscr
     assert f"'invalid' is not one of {QOS.all()}" == response_data['detail']
 
 
-def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_subscription, test_user):
-    subscription = generate_subscription(user=test_user)
+def test_put_subscription__invalid_topic_id__returns_400(test_client, test_user, generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user)
 
     subscription_data = {
-        'topic_id': 1234,
+        'topics': ['invalid topic'],
     }
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
@@ -431,7 +428,7 @@ def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_s
     assert 400 == response.status_code
 
     response_data = json.loads(response.data)
-    assert "{'topic_id': ['there is no topic with id 1234']}" == response_data['detail']
+    assert '{\'topics\': ["No topic found with name \'invalid topic\'"]}' == response_data['detail']
 
 
 @mock.patch('subscription_manager.broker.broker.delete_queue_binding', return_value=None)
@@ -439,8 +436,8 @@ def test_put_subscription__invalid_topic_id__returns_400(test_client, generate_s
 @mock.patch('subscription_manager.db.subscriptions.update_subscription', side_effect=SQLAlchemyError(None, None, None))
 def test_put_subscription__db_error__returns_500(mock_update_subscription, mock_bind_queue_to_topic,
                                                  mock_delete_queue_binding, test_client, generate_subscription,
-                                                 test_user):
-    subscription = generate_subscription(user=test_user)
+                                                 test_user, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user)
 
     subscription_data = {'active': not subscription.active}
 
@@ -455,8 +452,8 @@ def test_put_subscription__db_error__returns_500(mock_update_subscription, mock_
 @mock.patch('subscription_manager.broker.broker.delete_queue_binding', side_effect=BrokerError('error'))
 @mock.patch('subscription_manager.broker.broker.bind_queue_to_topic', side_effect=BrokerError('error'))
 def test_put_subscription__broker_error__returns_502(mock_bind_queue_to_topic, mock_delete_queue_binding, test_client,
-                                                     generate_subscription, test_user):
-    subscription = generate_subscription(user=test_user)
+                                                     generate_subscription, test_user, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user)
 
     subscription_data = {'active': not subscription.active}
 
@@ -470,8 +467,8 @@ def test_put_subscription__broker_error__returns_502(mock_bind_queue_to_topic, m
     assert "Error while accessing broker: error" == response_data['detail']
 
 
-def test_put_subscription__unauthorized_user_returns_401(test_client, generate_subscription):
-    subscription = generate_subscription()
+def test_put_subscription__unauthorized_user_returns_401(test_client, generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic name')])
 
     subscription_data = {'active': not subscription.active}
 
@@ -488,11 +485,12 @@ def test_put_subscription__unauthorized_user_returns_401(test_client, generate_s
 
 @mock.patch('subscription_manager.broker.broker.broker_client')
 def test_put_subscription__admin_user_can_update_any_subscription(mock_broker_client, test_client, test_user,
-                                                                  test_admin_user, generate_subscription):
+                                                                  test_admin_user, generate_subscription,
+                                                                  generate_topic):
     mock_broker_client.bind_queue_to_topic = mock.Mock(return_value=None)
     mock_broker_client.delete_queue_binding = mock.Mock(return_value=None)
 
-    subscription = generate_subscription(user=test_user, with_broker_queue=True)
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user, with_broker_queue=True)
 
     subscription_data = {'active': not subscription.active}
 
@@ -515,11 +513,11 @@ def test_put_subscription__admin_user_can_update_any_subscription(mock_broker_cl
 
 @mock.patch('subscription_manager.broker.broker.broker_client')
 def test_put_subscription__subscription_is_updated_in_db_and_broker(mock_broker_client, test_client,
-                                                                    generate_subscription, test_user):
+                                                                    generate_subscription, test_user, generate_topic):
     mock_broker_client.bind_queue_to_topic = mock.Mock(return_value=None)
     mock_broker_client.delete_queue_binding = mock.Mock(return_value=None)
 
-    subscription = generate_subscription(user=test_user, with_broker_queue=True)
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user, with_broker_queue=True)
 
     subscription_data = {'active': not subscription.active}
 
@@ -549,8 +547,8 @@ def test_delete_subscription__subscription_does_not_exist__returns_404(test_clie
     assert 404 == response.status_code
 
 
-def test_delete_subscription__unauthorized_user__returns_401(test_client, generate_subscription):
-    subscription = generate_subscription()
+def test_delete_subscription__unauthorized_user__returns_401(test_client, generate_subscription, generate_topic):
+    subscription = generate_subscription(topics=[generate_topic('topic name')])
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
@@ -561,12 +559,14 @@ def test_delete_subscription__unauthorized_user__returns_401(test_client, genera
     response_data = json.loads(response.data)
     assert 'Invalid credentials' == response_data['detail']
 
+
 @mock.patch('subscription_manager.broker.broker.broker_client')
 def test_delete_subscription__admin_user_can_delete_any_subscription(mock_broker_client, test_client, test_user,
-                                                                     test_admin_user, generate_subscription):
+                                                                     test_admin_user, generate_subscription,
+                                                                     generate_topic):
     mock_broker_client.delete_queue_binding = mock.Mock(return_value=None)
 
-    subscription = generate_subscription(user=test_user, with_broker_queue=True)
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user, with_broker_queue=True)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
@@ -581,10 +581,10 @@ def test_delete_subscription__admin_user_can_delete_any_subscription(mock_broker
 
 @mock.patch('subscription_manager.broker.broker.broker_client')
 def test_delete_subscription__subscription_is_deleted_and_returns_204(mock_broker_client, test_client,
-                                                                      generate_subscription, test_user):
+                                                                      generate_subscription, test_user, generate_topic):
     mock_broker_client.delete_queue_binding = mock.Mock(return_value=None)
 
-    subscription = generate_subscription(user=test_user, with_broker_queue=True)
+    subscription = generate_subscription(topics=[generate_topic('topic name')], user=test_user, with_broker_queue=True)
 
     url = f'{BASE_PATH}/subscriptions/{subscription.id}'
 
