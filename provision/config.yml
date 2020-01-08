@@ -30,7 +30,7 @@ SQLALCHEMY_DATABASE_URI: 'postgresql+psycopg2://swim:swim@localhost:5432/smdb'
 SQLALCHEMY_TRACK_MODIFICATIONS: false  # silence the deprecation warning
 
 BROKER:
-  host: 'localhost:15671'
+  host: 'localhost:15672'
   https: True
   username: ${BROKER_ADMIN_USER}
   password: ${BROKER_ADMIN_PASS}
@@ -38,3 +38,38 @@ BROKER:
   retry: 10
 
 DB_PROVISION_RETRY: 10
+MAX_BROKER_QUEUE_LENGTH: 100
+
+DB_USERS:
+  - user: sm-admin
+    pass: rfasdfawsfq
+    admin: true
+  - user: swim-adsb
+    pass: rfasdfawsfq
+  - user: swim-explorer
+    pass: rfasdfawsfq
+
+
+BROKER_USERS:
+  - user: broker-mgmt-user
+    pass: rfasdfawsfq
+    permissions:
+      configure: ".*"
+      write: ".*"
+      read: ".*"
+    tags:
+      - management
+  - user: swim-explorer-broker
+    pass: rfasdfawsfq
+    permissions:
+      configure: ".*"
+      write: ""
+      read: ".*"
+
+BROKER_POLICIES:
+  - name: 'max-queue-length'
+    pattern: ".*"
+    priority: 1
+    apply_to: "queues"
+    definitions:
+      max-length: 100
