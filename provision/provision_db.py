@@ -2,27 +2,27 @@
 Copyright 2019 EUROCONTROL
 ==========================================
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the 
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following 
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
    disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following 
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
    disclaimer in the documentation and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products 
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products
    derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ==========================================
 
-Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative: 
+Editorial note: this license is an instance of the BSD license template as provided by the Open Source Initiative:
 http://opensource.org/licenses/BSD-3-Clause
 
 Details on EUROCONTROL: http://www.eurocontrol.int
@@ -31,7 +31,7 @@ import logging
 import os
 import time
 from functools import partial
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, Dict
 
 from pkg_resources import resource_filename
 from sqlalchemy.exc import OperationalError
@@ -64,20 +64,13 @@ def _user_exists(user):
     return True
 
 
-def _get_users():
+def _get_users(db_users_config: Dict) -> List[User]:
     return [
-        User(username=os.environ['SM_ADMIN_USER'],
-             password=generate_password_hash(os.environ['SM_ADMIN_PASS']),
+        User(username=user_data['user'],
+             password=generate_password_hash(user_data['pass']),
              active=True,
-             is_admin=True),
-        User(username=os.environ['SWIM_ADSB_SM_USER'],
-             password=generate_password_hash(os.environ['SWIM_ADSB_SM_PASS']),
-             active=True,
-             is_admin=False),
-        User(username=os.environ['SWIM_EXPLORER_SM_USER'],
-             password=generate_password_hash(os.environ['SWIM_EXPLORER_SM_PASS']),
-             active=True,
-             is_admin=False)
+             is_admin=user_data.get('admin', False))
+        for user_data in db_users_config
     ]
 
 
@@ -118,6 +111,6 @@ if __name__ == '__main__':
     config = load_config(config_file)
 
     db_operation(
-        func=partial(provision_db_with_users, config_file=config_file, users=_get_users()),
+        func=partial(provision_db_with_users, config_file=config_file, users=_get_users(config['DB_USERS'])),
         retry=config['DB_PROVISION_RETRY']
     )

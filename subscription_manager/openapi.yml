@@ -151,6 +151,7 @@ paths:
       operationId: subscription_manager.endpoints.topics.get_topic
       parameters:
         - in: path
+          required: true
           name: topic_id
           description: the id of the requested topic
           schema:
@@ -178,6 +179,7 @@ paths:
       parameters:
         - in: path
           name: topic_id
+          required: true
           description: the id of the requested topic
           schema:
             type: integer
@@ -295,6 +297,7 @@ paths:
       parameters:
         - in: path
           name: subscription_id
+          required: true
           description: the id of the requested subscription
           schema:
             type: integer
@@ -321,6 +324,7 @@ paths:
       parameters:
         - in: path
           name: subscription_id
+          required: true
           description: the id of the subscription to be updated
           schema:
             type: integer
@@ -549,15 +553,7 @@ components:
       description: the data to be sent in order to update an existing subscription
       type: object
       properties:
-        topic_id:
-          type: number
-          example: 1
         active:
-          type: boolean
-          example: true
-        qos:
-          $ref: '#/components/schemas/QOS'
-        durable:
           type: boolean
           example: true
     Subscription:

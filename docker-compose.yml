@@ -3,7 +3,7 @@ version: "2"
 services:
   postgres:
     image: postgres
-    container_name: postgres
+    container_name: s_postgres
     volumes:
       - ./docker/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
@@ -14,11 +14,11 @@ services:
     build: ./docker/rabbitmq
     container_name: rabbitmq
     ports:
-      - "15672:15672"
-      - "15671:15671"
-      - "5671:5671"
-      - "5672:5672"
-      - "1883:1883"
-      - "8883:8883"
+      - 15672:15672
+      - 15671:15671
+      - 5671:5671
+      - 5672:5672
+      - 1883:1883
+      - 8883:8883
 #    volumes:
 #      - ${CERTS_DIR}:/certs/
