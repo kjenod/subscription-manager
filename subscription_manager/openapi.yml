@@ -359,6 +359,7 @@ paths:
       operationId: subscription_manager.endpoints.subscriptions.delete_subscription
       parameters:
         - in: path
+          required: true
           name: subscription_id
           description: the id of the requested subscription
           schema:
@@ -435,6 +436,7 @@ paths:
       parameters:
         - in: path
           name: user_id
+          required: true
           description: the id of the requested user
           schema:
             type: number
@@ -461,6 +463,7 @@ paths:
       parameters:
         - in: path
           name: user_id
+          required: true
           description: the id of the user to be updated
           schema:
             type: number
