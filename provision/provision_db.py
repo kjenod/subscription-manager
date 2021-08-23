@@ -30,9 +30,10 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 import logging
 import os
 import time
-from functools import partial
+from functools import partial, wraps
 from typing import Callable, Optional, List, Dict
 
+from flask import Flask
 from pkg_resources import resource_filename
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.exc import NoResultFound
@@ -74,43 +75,50 @@ def _get_users(db_users_config: Dict) -> List[User]:
     ]
 
 
-def provision_db_with_users(config_file: str, users: List[User]):
-    app = create_app(config_file)
-
-    with app.app_context():
-        for user in users:
-            if _user_exists(user):
-                _logger.info(f"User {user.username} already exists. Skipping...")
-                continue
-            _save(user)
-            _logger.info(f'User {user.username} saved successfully in DB')
+def flask_app_context(flask_app: Flask):
+    def wrapper(f):
+        @wraps(f)
+        def inner(*args, **kwargs):
+            with flask_app.app_context():
+                f(*args, **kwargs)
+        return inner
+    return wrapper
 
 
-def db_operation(func: Callable, retry: int, delay: Optional[int] = 0.1):
+def provision_db_with_users(users: List[User]):
+    for user in users:
+        if _user_exists(user):
+            _logger.info(f"User {user.username} already exists. Skipping...")
+            continue
+        _save(user)
+        _logger.info(f'User {user.username} saved successfully in DB')
+
+
+def perform_db_operation(operation: Callable, retry: int, delay: Optional[int] = 0.1):
     """
-    :param func:
+    :param operation:
     :param retry:
     :param delay:
     :return:
     """
     try:
-        func()
+        operation()
     except OperationalError:
         if retry <= 0:
             _logger.error(f'Max retries reached. Exiting...')
             return
         _logger.info(f"Retrying in {delay}")
         time.sleep(delay)
-        db_operation(func, retry - 1, delay * 2)
+        perform_db_operation(operation, retry - 1, delay * 2)
 
 
 if __name__ == '__main__':
     config_file = resource_filename(__name__, 'config.yml')
 
-    # load config because we need the DB_PROVISION_RETRY variable
-    config = load_config(config_file)
+    app = create_app(config_file)
 
-    db_operation(
-        func=partial(provision_db_with_users, config_file=config_file, users=_get_users(config['DB_USERS'])),
-        retry=config['DB_PROVISION_RETRY']
-    )
+    db_users = _get_users(app.config['DB_USERS'])
+
+    db_operation = flask_app_context(app)(partial(provision_db_with_users, users=db_users))
+
+    perform_db_operation(operation=db_operation, retry=app.config['DB_PROVISION_RETRY'])

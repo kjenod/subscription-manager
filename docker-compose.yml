@@ -2,8 +2,13 @@ version: "2"
 
 services:
   postgres:
-    image: postgres
+    image: swim-postgres
     container_name: s_postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - DB_USER=swim
+      - DB_PASS=swim
     volumes:
       - ./docker/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:

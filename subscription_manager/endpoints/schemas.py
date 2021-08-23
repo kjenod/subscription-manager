@@ -30,7 +30,7 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 
 from marshmallow import post_dump, ValidationError
 from marshmallow.fields import Nested, Integer, Boolean
-from marshmallow_sqlalchemy import ModelSchemaOpts, ModelSchema
+from marshmallow_sqlalchemy import SQLAlchemySchemaOpts, SQLAlchemySchema
 
 from swim_backend.db import db
 from subscription_manager.db.models import Topic, Subscription, User
@@ -39,7 +39,7 @@ from subscription_manager.db.topics import get_topic_by_id
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class BaseOpts(ModelSchemaOpts):
+class BaseOpts(SQLAlchemySchemaOpts):
     def __init__(self, meta, ordered):
         if not hasattr(meta, 'sql_session'):
                 meta.sqla_session = db.session
@@ -48,7 +48,7 @@ class BaseOpts(ModelSchemaOpts):
         super(BaseOpts, self).__init__(meta)
 
 
-class BaseSchema(ModelSchema):
+class BaseSchema(SQLAlchemySchema):
     OPTIONS_CLASS = BaseOpts
 
 
