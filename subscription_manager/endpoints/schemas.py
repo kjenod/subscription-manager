@@ -30,7 +30,8 @@ Details on EUROCONTROL: http://www.eurocontrol.int
 
 from marshmallow import post_dump, ValidationError
 from marshmallow.fields import Nested, Integer, Boolean
-from marshmallow_sqlalchemy import SQLAlchemySchemaOpts, SQLAlchemySchema
+from marshmallow_sqlalchemy import SQLAlchemySchemaOpts, SQLAlchemySchema, SQLAlchemyAutoSchema, \
+    SQLAlchemyAutoSchemaOpts
 
 from swim_backend.db import db
 from subscription_manager.db.models import Topic, Subscription, User
@@ -39,16 +40,18 @@ from subscription_manager.db.topics import get_topic_by_id
 __author__ = "EUROCONTROL (SWIM)"
 
 
-class BaseOpts(SQLAlchemySchemaOpts):
+class BaseOpts(SQLAlchemyAutoSchemaOpts):
     def __init__(self, meta, ordered):
-        if not hasattr(meta, 'sql_session'):
-                meta.sqla_session = db.session
+        if not hasattr(meta, 'sqla_session'):
+            meta.sqla_session = db.session
+        if not hasattr(meta, 'load_instance'):
+            meta.load_instance = True
         if not hasattr(meta, 'include_fk'):
             meta.include_fk = True
         super(BaseOpts, self).__init__(meta)
 
 
-class BaseSchema(SQLAlchemySchema):
+class BaseSchema(SQLAlchemyAutoSchema):
     OPTIONS_CLASS = BaseOpts
 
 
@@ -56,8 +59,8 @@ class TopicSchema(BaseSchema):
 
     class Meta:
         model = Topic
-        load_only = ("user", "user_id", "subscriptions")
-        dump_only = ("id",)
+        # load_only = ("user", "user_id", "subscriptions", "name",)
+        # dump_only = ("id", "name")
 
     user_id = Integer(required=False)
 
