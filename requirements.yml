@@ -14,6 +14,6 @@ dependencies:
   - marshmallow-sqlalchemy
   - flask-migrate
   - psycopg2-binary
-  - git+https://git@github.com/eurocontrol-swim/rest-client.git
-  - git+https://git@github.com/eurocontrol-swim/broker-rest-client.git
-  - git+https://git@github.com/eurocontrol-swim/swim-backend.git
+  - git+https://git@github.com/kjenod/rest-client.git
+  - git+https://git@github.com/kjenod/broker-rest-client.git
+  - git+https://git@github.com/kjenod/swim-backend.git
